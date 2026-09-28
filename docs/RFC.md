@@ -49,7 +49,7 @@ Sequence `a` is newer than `b` when `0 < ((a - b) mod 2^32) < 2^31`.
 | `0x22` | `ENTITY_DESTROY` | Server to clients | 12 |
 | `0x23` | `ENTITY_DAMAGE` | Server to clients | 13 |
 | `0x24` | `PLAYER_DEATH` | Server to clients | 13 |
-| `0x7f` | `ERROR` | Server to client | 7 |
+| `0x67` | `ERROR` | Server to client | 7 |
 
 The header's `type` identifies the message; payloads have no command code.
 A projectile `ENTITY_SPAWN` also signals that someone fired.
