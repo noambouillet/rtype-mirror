@@ -1,0 +1,55 @@
+# CMake build directories and generated files
+/build/
+/build-*/
+/cmake-build-*/
+/out/
+/CMakeFiles/
+/CMakeCache.txt
+/CMakeUserPresets.json
+/cmake_install.cmake
+/compile_commands.json
+/_deps/
+
+# Package manager output (keep manifests and lockfiles tracked)
+/vcpkg_installed/
+/.conan/
+/conan_toolchain.cmake
+/conanbuild*
+/conanrun*
+/cpm-cache/
+
+# Compiled binaries and libraries
+/r-type_server
+/r-type_client
+*.o
+*.obj
+*.a
+*.lib
+*.so
+*.so.*
+*.dylib
+*.dll
+*.exe
+*.pdb
+*.ilk
+*.exp
+
+# Test, coverage, and runtime output
+/Testing/
+/coverage/
+/logs/
+*.gcda
+*.gcno
+*.gcov
+*.log
+/core
+/core.[0-9]*
+
+# Editor and OS files
+/.vscode/
+/.idea/
+/.vs/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
