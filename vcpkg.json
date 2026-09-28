@@ -1,0 +1,10 @@
+{
+  "name": "r-type",
+  "version-string": "1.0.0",
+  "dependencies": [
+    "asio",
+    "sfml",
+    "gtest"
+  ],
+  "builtin-baseline": "23a10526013a52f9c5a1532f81665a3424d101d2" 
+}
