@@ -1,0 +1,28 @@
+name: lint
+on: [pull_request]
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Install tools
+        run: sudo apt-get update && sudo apt-get install -y clang-format clang-tidy
+      - name: clang-format
+        run: |
+          if [ -n "$(git ls-files -- '*.cpp' '*.hpp')" ]; then
+            git ls-files -z -- '*.cpp' '*.hpp' | xargs -0 -r clang-format --dry-run --Werror
+          else
+            echo 'No C++ files to format.'
+          fi
+      - name: clang-tidy
+        run: |
+          if [ -n "$(git ls-files -- 'src/*.cpp')" ]; then
+            if [ ! -f CMakeLists.txt ]; then
+              echo '::error::CMakeLists.txt is required to lint C++ sources.'
+              exit 1
+            fi
+            cmake -S . -B build -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+            run-clang-tidy -p build -quiet 'src/.*\.cpp'
+          else
+            echo 'No C++ sources to analyze.'
+          fi
