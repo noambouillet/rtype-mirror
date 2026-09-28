@@ -5,8 +5,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
-      - name: Install tools
-        run: sudo apt-get update && sudo apt-get install -y clang-format clang-tidy
+        with:
+          submodules: recursive
+
+      - name: Install system dependencies and tools
+        run: sudo apt-get update && sudo apt-get install -y clang-format clang-tidy libx11-dev libxcursor-dev libxi-dev libgl1-mesa-dev libfontconfig1-dev libudev-dev
+
       - name: clang-format
         run: |
           if [ -n "$(git ls-files -- '*.cpp' '*.hpp')" ]; then
@@ -14,14 +18,26 @@ jobs:
           else
             echo 'No C++ files to format.'
           fi
+
+      - name: Export GitHub Actions cache environment variables
+        uses: actions/github-script@v6
+        with:
+          script: |
+            core.exportVariable('ACTIONS_CACHE_URL', process.env.ACTIONS_CACHE_URL || '');
+            core.exportVariable('ACTIONS_RUNTIME_TOKEN', process.env.ACTIONS_RUNTIME_TOKEN || '');
+
+      - name: Set up Vcpkg Binary Cache
+        run: echo "VCPKG_BINARY_SOURCES=clear;x-gha,readwrite" >> $GITHUB_ENV
+
+      - name: Bootstrap Vcpkg
+        run: ./vcpkg/bootstrap-vcpkg.sh
+
+      - name: Generate compile_commands.json
+        run: cmake -S . -B build -DCMAKE_TOOLCHAIN_FILE=vcpkg/scripts/buildsystems/vcpkg.cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+
       - name: clang-tidy
         run: |
           if [ -n "$(git ls-files -- 'src/*.cpp')" ]; then
-            if [ ! -f CMakeLists.txt ]; then
-              echo '::error::CMakeLists.txt is required to lint C++ sources.'
-              exit 1
-            fi
-            cmake -S . -B build -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
             run-clang-tidy -p build -quiet 'src/.*\.cpp'
           else
             echo 'No C++ sources to analyze.'
