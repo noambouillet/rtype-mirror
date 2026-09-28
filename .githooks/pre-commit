@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+# Check the staged content, including files with spaces in their names.
+set -o pipefail
+
+git diff --cached --name-only -z --diff-filter=ACMR -- '*.cpp' '*.hpp' |
+  while IFS= read -r -d '' file; do
+    if ! git show ":$file" |
+      clang-format --dry-run --Werror --assume-filename="$file"; then
+      printf '%s: staged content is not formatted. Run clang-format -i, then stage it again.\n' "$file" >&2
+      exit 1
+    fi
+  done

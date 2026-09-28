@@ -1,0 +1,19 @@
+#!/usr/bin/env python3
+import re
+import sys
+
+PATTERN = re.compile(
+    r"^(build|ci|docs|feat|fix|perf|refactor|revert|style|test|del|merge|update)"
+    r"(\(.+\))?: .+$"
+)
+
+with open(sys.argv[1], encoding="utf-8") as f:
+    first_line = f.readline().rstrip("\n")
+
+if PATTERN.match(first_line):
+    sys.exit(0)
+
+print("Commit message does not match the pattern:")
+print("  <type>(<optional scope>): <description>")
+print("  types: build ci docs feat fix perf refactor revert style test del merge update")
+sys.exit(1)
