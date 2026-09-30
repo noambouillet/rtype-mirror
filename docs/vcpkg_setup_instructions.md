@@ -45,4 +45,20 @@ Once the CMake generation is complete, start the compilation:
 ```bash
 cmake --build build
 ```
-The generated executables (`r-type_server`, `r-type_client`) will be located in the `build/` directory.
+The server executable is `build/r-type_server` on Linux and `build/Debug/r-type_server.exe` with the default Visual Studio generator on Windows. The client target will be available when its source tree is added. To install its SFML dependency, configure with `-DVCPKG_MANIFEST_FEATURES=client`.
+
+**5. Run and verify the server**
+
+The server listens on UDP port 6767 by default. Pass a different port as its only argument:
+
+```bash
+./build/r-type_server 6767
+```
+
+On Windows, run `build\Debug\r-type_server.exe 6767` (or use the output path for your chosen CMake generator). Stop it with Ctrl+C. The server has no graphical interface. It currently accepts joins, disconnects, and input commands, and sends protocol errors and departure notices. Its fixed tick does not run gameplay or send snapshots; that requires the planned ECS integration. Clients use the binary protocol in [RFC.md](RFC.md).
+
+The UDP smoke test requires Python 3 and local UDP socket access:
+
+```bash
+ctest --test-dir build --output-on-failure
+```

@@ -51,6 +51,7 @@
 /.vscode/
 /.idea/
 /.vs/
+/.cache/
 *.swp
 *.swo
 .DS_Store
