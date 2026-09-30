@@ -188,6 +188,7 @@ Checks: >
   modernize-*,
   performance-*,
   readability-*,
+  -modernize-use-nodiscard,
   -modernize-use-trailing-return-type,
   -readability-magic-numbers,
   -readability-identifier-length
