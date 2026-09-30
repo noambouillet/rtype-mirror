@@ -62,7 +62,7 @@ inline void ComponentManager::entityDestroyed(Entity e)
             arr->entityDestroyed(e);
 }
 
-///@brief Get the ComponentArray storing components of type T.
+///Get the ComponentArray storing components of type T.
 template<typename T>
 std::shared_ptr<ComponentArray<T>> ComponentManager::getArray()
 {
