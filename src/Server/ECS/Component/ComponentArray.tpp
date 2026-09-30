@@ -10,7 +10,7 @@
 
 
 
-///@brief Insert a component for the given entity.
+///Insert a component for the given entity.
 template<typename T>
 void ComponentArray<T>::insert(Entity e, T comp)
 {
@@ -22,7 +22,7 @@ void ComponentArray<T>::insert(Entity e, T comp)
 }
 
 
-///@brief Remove the component of the given entity, keeping the array packed.
+///Remove the component of the given entity, keeping the array packed.
 template<typename T>
 void ComponentArray<T>::remove(Entity e)
 {
@@ -39,7 +39,7 @@ void ComponentArray<T>::remove(Entity e)
 }
 
 
-///@brief Get a reference to the component of the given entity.
+///Get a reference to the component of the given entity.
 template<typename T>
 T& ComponentArray<T>::get(Entity e)
 {
@@ -48,7 +48,7 @@ T& ComponentArray<T>::get(Entity e)
 }
 
 
-///@brief Remove the entity's component if it has one.
+///Remove the entity's component if it has one.
 template<typename T>
 void ComponentArray<T>::entityDestroyed(Entity e)
 {

@@ -8,7 +8,7 @@
 #pragma once
 #include "ComponentManager.hpp"
 
-///@brief Register a new component type T.
+///@ Register a new component type T.
 template<typename T>
 void ComponentManager::registerComponent()
 {
@@ -20,7 +20,7 @@ void ComponentManager::registerComponent()
     _arrays[name] = std::make_shared<ComponentArray<T>>();
 }
 
-///@brief Get the ComponentType id associated with T.
+///Get the ComponentType id associated with T.
 template<typename T>
 ComponentType ComponentManager::getType()
 {
@@ -30,28 +30,28 @@ ComponentType ComponentManager::getType()
     return _types[name];
 }
 
-///@brief Add a component of type T to the given entity.
+///Add a component of type T to the given entity.
 template<typename T>
 void ComponentManager::add(Entity e, T comp)
 {
     getArray<T>()->insert(e, comp);
 }
 
-///@brief Remove the component of type T from the given entity.
+///Remove the component of type T from the given entity.
 template<typename T>
 void ComponentManager::remove(Entity e)
 {
     getArray<T>()->remove(e);
 }
 
-///@brief Get a reference to the component of type T of the given entity.
+///Get a reference to the component of type T of the given entity.
 template<typename T>
 T& ComponentManager::get(Entity e)
 {
     return getArray<T>()->get(e);
 }
 
-///@brief Notify every component array that an entity was destroyed.
+///Notify every component array that an entity was destroyed.
 inline void ComponentManager::entityDestroyed(Entity e)
 {
     for (auto& [name, arr] : _arrays)
