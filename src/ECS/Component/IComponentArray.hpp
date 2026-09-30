@@ -1,6 +1,6 @@
 /*
 ** EPITECH PROJECT, 2026
-** rtype
+** R-Type
 ** File description:
 ** IComponentArray
 */
