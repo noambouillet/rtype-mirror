@@ -15,7 +15,7 @@ ComponentManager::ComponentManager(): _nextType(0) {}
 template<typename T>
 void ComponentManager::registerComponent()
 {
-    const char *name = typeid(T).name();
+    std::string name = typeid(T).name();
     assert(_types.find(name) == _types.end() && "component already exist");
     assert(_nextType < MAX_COMPONENTS && "too many components");
 
@@ -28,7 +28,7 @@ void ComponentManager::registerComponent()
 template<typename T>
 ComponentType ComponentManager::getType()
 {
-    const char *name = typeid(T).name();
+    std::string name = typeid(T).name();
     assert(_types.find(name) != _types.end() && "component doesn't exist");
 
     return _types[name];

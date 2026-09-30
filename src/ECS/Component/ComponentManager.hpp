@@ -8,6 +8,7 @@
 #pragma once
 
 #include <memory>
+#include <string>
 #include <unordered_map>
 #include <typeinfo>
 #include <cassert>
@@ -29,8 +30,8 @@ class ComponentManager {
         T& get(Entity e);
         void entityDestroyed(Entity e);
     private:
-        std::unordered_map<const char*, ComponentType> _types;
-        std::unordered_map<const char*, std::shared_ptr<IComponentArray>> _arrays;
+        std::unordered_map<std::string, ComponentType> _types;
+        std::unordered_map<std::string, std::shared_ptr<IComponentArray>> _arrays;
         ComponentType _nextType;
         template<typename T>
         std::shared_ptr<ComponentArray<T>> getArray();
