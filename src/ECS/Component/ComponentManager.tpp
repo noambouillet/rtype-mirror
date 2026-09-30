@@ -16,7 +16,8 @@ void ComponentManager::registerComponent()
     assert(_types.find(name) == _types.end() && "component already exist");
     assert(_nextType < MAX_COMPONENTS && "too many components");
 
-    _types[name] = _nextType++;
+    _nextType++
+    _types[name] = _nextType;
     _arrays[name] = std::make_shared<ComponentArray<T>>();
 }
 
