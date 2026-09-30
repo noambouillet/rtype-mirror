@@ -8,7 +8,9 @@
 #pragma once
 #include "ComponentArray.hpp"
 
-
+/// initialize _size to 0
+template<typename T>
+ComponentArray<T>::ComponentArray(): _size(0) {}
 
 ///Insert a component for the given entity.
 template<typename T>

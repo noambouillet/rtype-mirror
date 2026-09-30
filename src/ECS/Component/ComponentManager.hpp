@@ -15,7 +15,7 @@
 
 class ComponentManager {
     public:
-        ComponentManager() = default;
+        ComponentManager();
         ~ComponentManager() = default;
         template<typename T>
         void registerComponent();
@@ -31,7 +31,7 @@ class ComponentManager {
     private:
         std::unordered_map<const char*, ComponentType> _types;
         std::unordered_map<const char*, std::shared_ptr<IComponentArray>> _arrays;
-        ComponentType _nextType = 0;
+        ComponentType _nextType;
         template<typename T>
         std::shared_ptr<ComponentArray<T>> getArray();
 };

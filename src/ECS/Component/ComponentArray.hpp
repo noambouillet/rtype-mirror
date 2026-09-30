@@ -14,7 +14,7 @@
 template<typename T>
 class ComponentArray: public IComponentArray {
     public:
-        ComponentArray() = default;
+        ComponentArray();
         ~ComponentArray() = default;
         void insert(Entity e, T comp);
         void remove(Entity e);
@@ -24,7 +24,7 @@ class ComponentArray: public IComponentArray {
         std::array<T, MAX_ENTITIES> _data;
         std::unordered_map<Entity, size_t> _entityToIndex;
         std::unordered_map<size_t, Entity> _indexToEntity;
-        size_t _size = 0;
+        size_t _size;
 };
 
 #include "ComponentArray.tpp"

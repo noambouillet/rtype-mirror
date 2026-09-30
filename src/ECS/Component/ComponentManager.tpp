@@ -8,7 +8,10 @@
 #pragma once
 #include "ComponentManager.hpp"
 
-///@ Register a new component type T.
+/// initialize _nextType to 0
+ComponentManager::ComponentManager(): _nextType(0) {}
+
+///Register a new component type T.
 template<typename T>
 void ComponentManager::registerComponent()
 {
