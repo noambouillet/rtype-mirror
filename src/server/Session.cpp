@@ -62,7 +62,7 @@ std::uint32_t Session::takeNextSequence()
 	return sequence;
 }
 
-/// Reports whether no valid client packet arrived within `timeout`.
+/// Reports whether no valid client packet arrived within "timeout".
 bool Session::hasExpired(Clock::time_point now, Clock::duration timeout) const
 {
 	return now - _lastHeard >= timeout;
