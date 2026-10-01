@@ -9,8 +9,6 @@
 #include "ComponentManager.hpp"
 
 namespace rtype::ecs {
-inline ComponentManager::ComponentManager(std::size_t maxEntities): _maxEntities(maxEntities) {}
-
 ///Register a new component type T.
 template<typename T>
 void ComponentManager::registerComponent()
@@ -51,16 +49,6 @@ template<typename T>
 T& ComponentManager::get(Entity e)
 {
     return getArray<T>()->get(e);
-}
-
-///Notify every component array that an entity was destroyed.
-inline void ComponentManager::entityDestroyed(Entity e)
-{
-    for (auto& arr : _arrays) {
-        if (arr) {
-            arr->entityDestroyed(e);
-        }
-    }
 }
 
 ///Get the ComponentArray storing components of type T.
