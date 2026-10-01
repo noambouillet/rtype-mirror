@@ -6,16 +6,20 @@
 */
 
 #pragma once
+#include <utility>
 #include "ComponentManager.hpp"
 
 namespace rtype::ecs {
-///Register a new component type T.
+///Register a new component type T and give it the next free ComponentType id.
 template<typename T>
 void ComponentManager::registerComponent()
 {
-    ComponentType id = std::type_index(typeid(T));
-    assert(id < MAX_COMPONENTS && "too many components");
-    assert(!_arrays[id] && "component already exist");
+    std::type_index key(typeid(T));
+    assert(_types.find(key) == _types.end() && "component already exist");
+    assert(_nextType < MAX_COMPONENTS && "too many components");
+
+    ComponentType id = _nextType++;
+    _types[key] = id;
 
     _arrays[id] = std::make_shared<ComponentArray<T>>(_maxEntities);
 }
@@ -24,17 +28,17 @@ void ComponentManager::registerComponent()
 template<typename T>
 ComponentType ComponentManager::getType()
 {
-    ComponentType id = std::type_index(typeid(T));
-    assert(id < MAX_COMPONENTS && _arrays[id] && "component doesn't exist");
+    auto it = _types.find(std::type_index(typeid(T)));
+    assert(it != _types.end() && "component doesn't exist");
 
-    return id;
+    return it->second;
 }
 
 ///Add a component of type T to the given entity.
 template<typename T>
 void ComponentManager::add(Entity e, T comp)
 {
-    getArray<T>()->insert(e, comp);
+    getArray<T>()->insert(e, std::move(comp));
 }
 
 ///Remove the component of type T from the given entity.
