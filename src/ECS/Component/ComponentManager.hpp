@@ -17,7 +17,7 @@
 namespace rtype::ecs {
 class ComponentManager {
     public:
-        ComponentManager();
+        explicit ComponentManager(std::size_t maxEntities);
         ~ComponentManager() = default;
         template<typename T>
         void registerComponent();
@@ -34,6 +34,7 @@ class ComponentManager {
         std::unordered_map<std::string, ComponentType> _types;
         std::unordered_map<std::string, std::shared_ptr<IComponentArray>> _arrays;
         ComponentType _nextType;
+        std::size_t _maxEntities;
         template<typename T>
         std::shared_ptr<ComponentArray<T>> getArray();
 };

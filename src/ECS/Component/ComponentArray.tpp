@@ -9,53 +9,59 @@
 #include "ComponentArray.hpp"
 
 namespace rtype::ecs {
-/// initialize _size to 0
 template<typename T>
-ComponentArray<T>::ComponentArray(): _size(0) {}
+ComponentArray<T>::ComponentArray(std::size_t maxEntities): _sparse(maxEntities, NONE) {}
+
+/// Check if a entity is present in the component array
+template<typename T>
+bool ComponentArray<T>::has(Entity e) const
+{
+    std::size_t index = e.index();
+    return index < _sparse.size() && _sparse[index] != NONE && _dense[_sparse[index]] == e;
+}
 
 ///Insert a component for the given entity.
 template<typename T>
 void ComponentArray<T>::insert(Entity e, T comp)
 {
-    assert(_entityToIndex.find(e) == _entityToIndex.end() && "component already exist");
-    _entityToIndex[e] = _size;
-    _indexToEntity[_size] = e;
-    _data[_size] = comp;
-    _size++;
+    assert(!has(e) && "component already exist");
+    assert(e.index() < _sparse.size() && "entity index out of range");
+    _sparse[e.index()] = _dense.size();
+    _dense.push_back(e);
+    _data.push_back(comp);
 }
-
 
 ///Remove the component of the given entity, keeping the array packed.
 template<typename T>
 void ComponentArray<T>::remove(Entity e)
 {
-    assert(_entityToIndex.find(e) != _entityToIndex.end() && "component doesn't exist");
-    size_t removed = _entityToIndex[e];
-    Entity lastEntity = _indexToEntity[_size - 1];
+    assert(has(e) && "component doesn't exist");
+    std::size_t removed = _sparse[e.index()];
+    Entity last = _dense.back();
 
-    _data[removed] = _data[_size -1];
-    _entityToIndex[lastEntity] = removed;
-    _indexToEntity[removed] = lastEntity;
-    _entityToIndex.erase(e);
-    _indexToEntity.erase(_size - 1);
-    _size--;
+    _dense[removed] = last;
+    _data[removed] = std::move(_data.back());
+    _sparse[last.index()] = removed;
+
+    _sparse[e.index()] = NONE;
+    _dense.pop_back();
+    _data.pop_back();
 }
-
 
 ///Get a reference to the component of the given entity.
 template<typename T>
 T& ComponentArray<T>::get(Entity e)
 {
-    assert(_entityToIndex.find(e) != _entityToIndex.end() && "component doesn't exist");
-    return _data[_entityToIndex[e]];
+    assert(has(e) && "component doesn't exist");
+    return _data[_sparse[e.index()]];
 }
-
 
 ///Remove the entity's component if it has one.
 template<typename T>
 void ComponentArray<T>::entityDestroyed(Entity e)
 {
-    if (_entityToIndex.find(e) != _entityToIndex.end())
+    if (has(e)) {
         remove(e);
+    }
 }
 } // namespace rtype::ecs

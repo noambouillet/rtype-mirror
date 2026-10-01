@@ -10,22 +10,25 @@
 #include <array>
 #include <unordered_map>
 #include <cassert>
+#include <vector>
+#include <cstddef>
 
 namespace rtype::ecs {
 template<typename T>
 class ComponentArray: public IComponentArray {
     public:
-        ComponentArray();
+        explicit ComponentArray(std::size_t maxEntities);
         ~ComponentArray() = default;
+        bool has(Entity e) const;
         void insert(Entity e, T comp);
         void remove(Entity e);
         T& get(Entity e);
         void entityDestroyed(Entity e) override;
     private:
-        std::array<T, MAX_ENTITIES> _data;
-        std::unordered_map<Entity, size_t> _entityToIndex;
-        std::unordered_map<size_t, Entity> _indexToEntity;
-        size_t _size;
+        static constexpr std::size_t NONE = static_cast<std::size_t>(-1);
+        std::vector<std::size_t> _sparse;
+        std::vector<Entity> _dense;
+        std::vector<T> _data;
 };
 
 #include "ComponentArray.tpp"

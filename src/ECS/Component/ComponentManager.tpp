@@ -10,7 +10,7 @@
 
 namespace rtype::ecs {
 /// initialize _nextType to 0
-ComponentManager::ComponentManager(): _nextType(0) {}
+ComponentManager::ComponentManager(std::size_t maxEntities): _nextType(0), _maxEntities(maxEntities) {}
 
 ///Register a new component type T.
 template<typename T>
@@ -22,7 +22,7 @@ void ComponentManager::registerComponent()
 
     _nextType++
     _types[name] = _nextType;
-    _arrays[name] = std::make_shared<ComponentArray<T>>();
+    _arrays[name] = std::make_shared<ComponentArray<T>>(_maxEntities);
 }
 
 ///Get the ComponentType id associated with T.
@@ -59,8 +59,9 @@ T& ComponentManager::get(Entity e)
 ///Notify every component array that an entity was destroyed.
 inline void ComponentManager::entityDestroyed(Entity e)
 {
-    for (auto& [name, arr] : _arrays)
+    for (auto& [name, arr] : _arrays) {
             arr->entityDestroyed(e);
+    }
 }
 
 ///Get the ComponentArray storing components of type T.
