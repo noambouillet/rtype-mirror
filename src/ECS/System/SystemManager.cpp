@@ -7,7 +7,7 @@
 
 #include "SystemManager.hpp"
 
-namespace ecs {
+namespace rtype::ecs {
 
 /// Removes the destroyed entity from all registered systems.
 void SystemManager::entityDestroyed(Entity entity) {
@@ -30,4 +30,4 @@ void SystemManager::entitySignatureChanged(Entity entity,
   }
 }
 
-}  // namespace ecs
+}  // namespace rtype::ecs

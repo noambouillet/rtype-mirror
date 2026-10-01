@@ -11,7 +11,7 @@
 
 #include "Entity.hpp"
 
-namespace ecs {
+namespace rtype::ecs {
 
 class System {
  public:
@@ -20,4 +20,4 @@ class System {
   std::set<Entity> entities;
 };
 
-}  // namespace ecs
+}  // namespace rtype::ecs

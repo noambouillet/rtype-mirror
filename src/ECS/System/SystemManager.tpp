@@ -9,7 +9,7 @@
 
 #include <cassert>
 
-namespace ecs {
+namespace rtype::ecs {
 
 /// Registers a new system of type T. The SystemManager takes exclusive
 /// ownership of the system and returns a reference for the user to manipulate.
@@ -43,4 +43,4 @@ T& SystemManager::getSystem() {
   return static_cast<T&>(*_systems[type]);
 }
 
-}  // namespace ecs
+}  // namespace rtype::ecs

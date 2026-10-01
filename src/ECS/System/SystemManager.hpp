@@ -15,7 +15,7 @@
 #include "System.hpp"
 #include "Types.hpp"
 
-namespace ecs {
+namespace rtype::ecs {
 
 class SystemManager {
  public:
@@ -39,6 +39,6 @@ class SystemManager {
   std::unordered_map<std::type_index, std::unique_ptr<System>> _systems;
 };
 
-}  // namespace ecs
+}  // namespace rtype::ecs
 
 #include "SystemManager.tpp"
