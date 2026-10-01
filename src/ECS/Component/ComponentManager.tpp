@@ -9,30 +9,27 @@
 #include "ComponentManager.hpp"
 
 namespace rtype::ecs {
-/// initialize _nextType to 0
-inline ComponentManager::ComponentManager(std::size_t maxEntities): _nextType(0), _maxEntities(maxEntities) {}
+inline ComponentManager::ComponentManager(std::size_t maxEntities): _maxEntities(maxEntities) {}
 
 ///Register a new component type T.
 template<typename T>
 void ComponentManager::registerComponent()
 {
-    std::string name = typeid(T).name();
-    assert(_types.find(name) == _types.end() && "component already exist");
-    assert(_nextType < MAX_COMPONENTS && "too many components");
+    ComponentType id = std::type_index(typeid(T));
+    assert(id < MAX_COMPONENTS && "too many components");
+    assert(!_arrays[id] && "component already exist");
 
-    _types[name] = _nextType;
-    _arrays[name] = std::make_shared<ComponentArray<T>>(_maxEntities);
-    _nextType++;
+    _arrays[id] = std::make_shared<ComponentArray<T>>(_maxEntities);
 }
 
 ///Get the ComponentType id associated with T.
 template<typename T>
 ComponentType ComponentManager::getType()
 {
-    std::string name = typeid(T).name();
-    assert(_types.find(name) != _types.end() && "component doesn't exist");
+    ComponentType id = std::type_index(typeid(T));
+    assert(id < MAX_COMPONENTS && _arrays[id] && "component doesn't exist");
 
-    return _types[name];
+    return id;
 }
 
 ///Add a component of type T to the given entity.
@@ -59,8 +56,10 @@ T& ComponentManager::get(Entity e)
 ///Notify every component array that an entity was destroyed.
 inline void ComponentManager::entityDestroyed(Entity e)
 {
-    for (auto& [name, arr] : _arrays) {
+    for (auto& arr : _arrays) {
+        if (arr) {
             arr->entityDestroyed(e);
+        }
     }
 }
 
@@ -68,6 +67,7 @@ inline void ComponentManager::entityDestroyed(Entity e)
 template<typename T>
 std::shared_ptr<ComponentArray<T>> ComponentManager::getArray()
 {
-    return std::static_pointer_cast<ComponentArray<T>>(_arrays[typeid(T).name()]);
+    ComponentType id = getType<T>();
+    return std::static_pointer_cast<ComponentArray<T>>(_arrays[id]);
 }
 } // namespace rtype::ecs

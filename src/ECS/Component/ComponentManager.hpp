@@ -7,10 +7,8 @@
 
 #pragma once
 
+#include <array>
 #include <memory>
-#include <string>
-#include <unordered_map>
-#include <typeinfo>
 #include <cassert>
 #include "ComponentArray.hpp"
 
@@ -31,9 +29,7 @@ class ComponentManager {
         T& get(Entity e);
         void entityDestroyed(Entity e);
     private:
-        std::unordered_map<std::string, ComponentType> _types;
-        std::unordered_map<std::string, std::shared_ptr<IComponentArray>> _arrays;
-        ComponentType _nextType;
+        std::array<std::shared_ptr<IComponentArray>, MAX_COMPONENTS> _arrays;
         std::size_t _maxEntities;
         template<typename T>
         std::shared_ptr<ComponentArray<T>> getArray();
