@@ -8,11 +8,11 @@
 #pragma once
 #include "Types.hpp"
 
-namespace ECS {
+namespace rtype::ecs {
 class IComponentArray {
     public:
         IComponentArray() = default;
         ~IComponentArray() = default;
         virtual void entityDestroyed(Entity e) = 0;
 };
-} // namepsace ECS
+} // namepsace rtype::ecs

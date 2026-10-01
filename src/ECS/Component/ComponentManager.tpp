@@ -8,7 +8,7 @@
 #pragma once
 #include "ComponentManager.hpp"
 
-namespace ECS {
+namespace rtype::ecs {
 /// initialize _nextType to 0
 ComponentManager::ComponentManager(): _nextType(0) {}
 
@@ -69,4 +69,4 @@ std::shared_ptr<ComponentArray<T>> ComponentManager::getArray()
 {
     return std::static_pointer_cast<ComponentArray<T>>(_arrays[typeid(T).name()]);
 }
-} // namespace ECS
+} // namespace rtype::ecs

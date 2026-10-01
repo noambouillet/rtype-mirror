@@ -8,7 +8,7 @@
 #pragma once
 #include "ComponentArray.hpp"
 
-namespace ECS {
+namespace rtype::ecs {
 /// initialize _size to 0
 template<typename T>
 ComponentArray<T>::ComponentArray(): _size(0) {}
@@ -58,4 +58,4 @@ void ComponentArray<T>::entityDestroyed(Entity e)
     if (_entityToIndex.find(e) != _entityToIndex.end())
         remove(e);
 }
-} // namespace ECS
+} // namespace rtype::ecs
