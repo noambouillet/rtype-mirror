@@ -6,7 +6,7 @@
 */
 
 #pragma once
-#include <IComponentArray.hpp>
+#include "IComponentArray.hpp"
 #include <array>
 #include <unordered_map>
 #include <cassert>
@@ -30,6 +30,5 @@ class ComponentArray: public IComponentArray {
         std::vector<Entity> _dense;
         std::vector<T> _data;
 };
-
-#include "ComponentArray.tpp"
 } // namespace rtype::ecs
+#include "ComponentArray.tpp"

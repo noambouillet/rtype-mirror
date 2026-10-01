@@ -25,6 +25,7 @@ template<typename T>
 void ComponentArray<T>::insert(Entity e, T comp)
 {
     assert(!has(e) && "component already exist");
+    assert(_sparse[e.index()] == NONE && "slot still used by a stale entity");
     assert(e.index() < _sparse.size() && "entity index out of range");
     _sparse[e.index()] = _dense.size();
     _dense.push_back(e);

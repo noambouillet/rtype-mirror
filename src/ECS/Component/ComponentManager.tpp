@@ -10,7 +10,7 @@
 
 namespace rtype::ecs {
 /// initialize _nextType to 0
-ComponentManager::ComponentManager(std::size_t maxEntities): _nextType(0), _maxEntities(maxEntities) {}
+inline ComponentManager::ComponentManager(std::size_t maxEntities): _nextType(0), _maxEntities(maxEntities) {}
 
 ///Register a new component type T.
 template<typename T>
@@ -20,9 +20,9 @@ void ComponentManager::registerComponent()
     assert(_types.find(name) == _types.end() && "component already exist");
     assert(_nextType < MAX_COMPONENTS && "too many components");
 
-    _nextType++
     _types[name] = _nextType;
     _arrays[name] = std::make_shared<ComponentArray<T>>(_maxEntities);
+    _nextType++;
 }
 
 ///Get the ComponentType id associated with T.

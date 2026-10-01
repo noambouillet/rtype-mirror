@@ -38,6 +38,5 @@ class ComponentManager {
         template<typename T>
         std::shared_ptr<ComponentArray<T>> getArray();
 };
-
-#include "ComponentManager.tpp"
 }// namespace rtype::ecs
+#include "ComponentManager.tpp"
