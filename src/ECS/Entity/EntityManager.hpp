@@ -15,7 +15,7 @@
 #include "Entity.hpp"
 #include "Types.hpp"
 
-namespace ecs {
+namespace rtype::ecs {
 
 class EntityManager {
  public:
@@ -44,4 +44,4 @@ class EntityManager {
   std::queue<Entity::Index> _freeIndices;
 };
 
-}  // namespace ecs
+}  // namespace rtype::ecs

@@ -10,7 +10,7 @@
 #include <compare>
 #include <cstdint>
 
-namespace ecs {
+namespace rtype::ecs {
 
 class Entity {
  public:
@@ -38,4 +38,4 @@ class Entity {
   Id _id;
 };
 
-}  // namespace ecs
+}  // namespace rtype::ecs

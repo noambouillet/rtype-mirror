@@ -7,7 +7,7 @@
 
 #include "Entity.hpp"
 
-namespace ecs {
+namespace rtype::ecs {
 
 /// Builds the null entity, which never refers to a living entity.
 Entity::Entity() : _id(NULL_ID) {}
@@ -30,4 +30,4 @@ Entity::Generation Entity::generation() const {
 /// Tells whether this is the null entity.
 bool Entity::isNull() const { return _id == NULL_ID; }
 
-}  // namespace ecs
+}  // namespace rtype::ecs

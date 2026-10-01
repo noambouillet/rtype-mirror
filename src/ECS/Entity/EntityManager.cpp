@@ -9,7 +9,7 @@
 
 #include <algorithm>
 
-namespace ecs {
+namespace rtype::ecs {
 
 /// The capacity is clamped so no valid entity can ever equal the null entity.
 EntityManager::EntityManager(std::size_t maxEntities)
@@ -92,4 +92,4 @@ std::size_t EntityManager::aliveCount() const { return _aliveCount; }
 /// Returns the maximum number of simultaneously living entities.
 std::size_t EntityManager::maxEntities() const { return _maxEntities; }
 
-}  // namespace ecs
+}  // namespace rtype::ecs
