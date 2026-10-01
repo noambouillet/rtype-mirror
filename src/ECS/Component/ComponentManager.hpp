@@ -14,6 +14,7 @@
 #include <cassert>
 #include "ComponentArray.hpp"
 
+namespace ECS {
 class ComponentManager {
     public:
         ComponentManager();
@@ -38,3 +39,4 @@ class ComponentManager {
 };
 
 #include "ComponentManager.tpp"
+}// namespace ECS

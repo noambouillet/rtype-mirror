@@ -11,6 +11,7 @@
 #include <unordered_map>
 #include <cassert>
 
+namespace ECS {
 template<typename T>
 class ComponentArray: public IComponentArray {
     public:
@@ -28,3 +29,4 @@ class ComponentArray: public IComponentArray {
 };
 
 #include "ComponentArray.tpp"
+} // namespace ECS
