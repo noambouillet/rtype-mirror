@@ -13,6 +13,7 @@
 #include <vector>
 
 #include "Entity.hpp"
+#include "Types.hpp"
 
 namespace ecs {
 
@@ -27,6 +28,10 @@ class EntityManager {
   [[nodiscard]] std::optional<Entity> create();
   bool destroy(Entity entity);
   [[nodiscard]] bool isAlive(Entity entity) const;
+
+  void setSignature(Entity entity, Signature signature);
+  [[nodiscard]] Signature getSignature(Entity entity) const;
+
   [[nodiscard]] std::size_t aliveCount() const;
   [[nodiscard]] std::size_t maxEntities() const;
 
@@ -35,6 +40,7 @@ class EntityManager {
   std::size_t _aliveCount;
   std::vector<Entity::Generation> _generations;
   std::vector<bool> _alive;
+  std::vector<Signature> _signatures;
   std::queue<Entity::Index> _freeIndices;
 };
 

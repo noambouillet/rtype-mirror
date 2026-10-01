@@ -28,10 +28,12 @@ std::optional<Entity> EntityManager::create() {
   if (canRecycle && shouldRecycle) {
     index = _freeIndices.front();
     _freeIndices.pop();
+    _signatures[index].reset();
   } else if (canGrow) {
     index = static_cast<Entity::Index>(_generations.size());
     _generations.push_back(0);
     _alive.push_back(false);
+    _signatures.push_back(Signature{});
   } else {
     return std::nullopt;
   }
@@ -52,6 +54,7 @@ bool EntityManager::destroy(Entity entity) {
 
   _alive[index] = false;
   _generations[index]++;
+  _signatures[index].reset();
   _freeIndices.push(index);
   _aliveCount--;
 
@@ -66,6 +69,21 @@ bool EntityManager::isAlive(Entity entity) const {
 
   return _alive[entity.index()] &&
          _generations[entity.index()] == entity.generation();
+}
+
+/// Overwrites the signature of a living entity.
+void EntityManager::setSignature(Entity entity, Signature signature) {
+  if (isAlive(entity)) {
+    _signatures[entity.index()] = signature;
+  }
+}
+
+/// Returns the signature of the entity. Returns an empty signature if dead.
+Signature EntityManager::getSignature(Entity entity) const {
+  if (isAlive(entity)) {
+    return _signatures[entity.index()];
+  }
+  return Signature{};
 }
 
 /// Returns the exact number of currently living entities.
