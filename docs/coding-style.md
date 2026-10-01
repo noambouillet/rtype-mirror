@@ -42,18 +42,23 @@ constexpr int MAX_PLAYERS = 4;
 
 class Player {
  public:
-  explicit Player(int health) : _health(health) {}
+  explicit Player(int health);
   void takeDamage(int amount);
 
-  float speed = 1.0f;  // public member: no prefix
+  float speed;
 
  private:
-  static constexpr int MAX_HEALTH = 100;  // constant: UPPER_CASE
-  int _health;                            // private member: `_` prefix
+  static constexpr int MAX_HEALTH = 100;
+  int _health;
 };
 
-void Player::takeDamage(int amount) {
-  const int remaining = _health - amount;  // runtime const: camelCase
+Player::Player(int health) : speed(1.0f), _health(health)
+{
+}
+
+void Player::takeDamage(int amount)
+{
+  const int remaining = _health - amount;
   _health = remaining;
 }
 ```
@@ -82,15 +87,16 @@ These rules are enforced by clang-tidy (see [Tooling](#tooling)).
 | `///`  | Documentation comment | Yes                          |
 | `//`   | Normal comment        | No                           |
 
-- Use `///` **above declarations** (functions, classes, members, enums) to
-  describe **what it is for** and how to use it.
+- Use `///` **above function definitions in `.cpp` files** to describe what
+  each function is for and how to use it. See `SKILLS/coding-style.md` for
+  project-specific placement rules.
 - Use `//` **inside function bodies** for **how or why** notes (tricky logic,
   workarounds, non-obvious choices).
 - Don't state the obvious in either kind.
 
 ### Function documentation
 
-Almost every function gets a `///` comment directly above its declaration.
+Almost every function gets a `///` comment directly above its definition.
 Skip it only for simple, obvious functions (trivial accessors, etc.).
 
 - The first sentence is the summary. It starts with a verb phrase, with "This
@@ -122,13 +128,19 @@ Not needed:
 /// Returns an iterator positioned at the first entry lexically greater than
 /// or equal to `startWord`. Returns a null pointer if there is no such entry.
 /// The iterator must not outlive the table.
-std::unique_ptr<Iterator> getIterator(std::string_view startWord) const;
+std::unique_ptr<Iterator> Table::getIterator(std::string_view startWord) const
+{
+  return findIterator(startWord);
+}
 
 /// Resamples the audio buffer to a new sample rate.
 ///
 /// @param ratio Output rate / input rate (e.g. 0.5 halves the rate).
 /// @param buf   Modified in place; must not be empty.
-void resample(AudioBuffer& buf, double ratio);
+void resample(AudioBuffer& buf, double ratio)
+{
+  buf.resample(ratio);
+}
 ```
 
 ## Tooling
@@ -141,9 +153,28 @@ repository root define the rules. Install `clang-format` and `clang-tidy`
 
 ```yaml
 BasedOnStyle: Google
+ColumnLimit: 0
+IndentWidth: 4
+TabWidth: 4
+UseTab: ForContinuationAndIndentation
+AccessModifierOffset: -4
+AlignAfterOpenBracket: DontAlign
+FixNamespaceComments: false
+BreakBeforeBraces: Custom
+BraceWrapping:
+  AfterFunction: true
+AllowShortFunctionsOnASingleLine: None
 ```
 
-We use the Google preset unchanged. Do not commit the output of
+We use the Google preset without automatic line wrapping. Source indentation
+uses four-column tabs for indentation. Access labels align with the class
+declaration, and class and struct members have one tab of indentation.
+Wrapped parameter lines use one continuation tab instead of aligning under
+the opening parenthesis.
+Clang-format does not add namespace closing comments and places each function
+definition's opening brace on the next line. This includes short and inline
+functions; control statements keep their Google-style braces. Do not commit
+the output of
 `clang-format -dump-config`: it pins every option and breaks on other
 clang-format versions.
 
@@ -157,6 +188,7 @@ Checks: >
   modernize-*,
   performance-*,
   readability-*,
+  -modernize-use-nodiscard,
   -modernize-use-trailing-return-type,
   -readability-magic-numbers,
   -readability-identifier-length

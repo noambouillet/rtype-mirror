@@ -1,22 +1,18 @@
-# R-Type UDP protocol (draft, Part 1)
+# R-Type UDP protocol (session and input phase)
 
-This is the wire protocol for the four-week prototype: one continuously running
-game with up to four players. The server controls movement, projectiles,
-collisions, damage, and deaths; clients send only button states. Each client
-renders its own starfield. This version has no lobbies, accounts, chat, or
-multiple games.
+This version implements the network layer for one game with up to four player
+sessions. It handles joins, disconnects, errors, and input commands. The server
+runs fixed network ticks, but does not create entities, simulate gameplay, or
+send world snapshots. An ECS integration will consume the inputs and define the
+world messages later. This is a partial implementation of the Part 1 assignment.
 
 ## Transport and encoding
 
-- All packet types below use UDP; this version opens no TCP connection. One
-  datagram contains exactly one packet of at most 1200 bytes, including the
-  header. The server address and port are configured separately; there is no
-  discovery message.
-- Fields have no padding. Multi-byte integers are big-endian; signed integers
-  use two's complement.
-- Version `1` defines the layouts below.
-- `u8`, `u16`, `u32`, and `u64` are unsigned integers of the stated bit width;
-  `i32` is a signed 32-bit integer.
+- All messages use UDP. One datagram contains exactly one packet of at most
+  1200 bytes, including its header.
+- Fields have no padding. Multi-byte integers are big-endian.
+- Protocol version is `1`. `u8`, `u16`, `u32`, and `u64` are unsigned integers
+  of the stated bit width.
 
 ### Common header (16 bytes)
 
@@ -25,14 +21,14 @@ multiple games.
 | 0 | 4 | bytes | `magic` | ASCII `RTYP` (`52 54 59 50` in hex) |
 | 4 | 1 | `u8` | `version` | `1` |
 | 5 | 1 | `u8` | `type` | One of the packet types below |
-| 6 | 2 | `u16` | `payload_size` | Bytes following the 16-byte header |
+| 6 | 2 | `u16` | `payload_size` | Bytes after the header |
 | 8 | 4 | `u32` | `sequence` | Sender's packet sequence number |
-| 12 | 4 | `u32` | `session_id` | Session assigned by the server; `0` before joining |
+| 12 | 4 | `u32` | `session_id` | Server-assigned session; `0` before joining |
 
 The datagram length must equal `16 + payload_size`. Join messages and `ERROR`
-use sequence `0`. After joining, each side independently numbers packets to
-that session from `1`, incrementing per packet and skipping `0` on wraparound.
-Sequence `a` is newer than `b` when `0 < ((a - b) mod 2^32) < 2^31`.
+use sequence `0`. Session packets use nonzero sequence numbers, incremented by
+the sender and skipping `0` on wraparound. Sequence `a` is newer than `b` when
+`0 < ((a - b) mod 2^32) < 2^31`.
 
 ### Packet types
 
@@ -82,39 +78,39 @@ during that run.
 | `JOIN_ACCEPTED` | `client_nonce: u64`, `player_id: u8` |
 | `JOIN_REJECTED` | `client_nonce: u64`, `reason: u8` |
 
-Join responses use sequence `0` and echo the nonce. A rejection has session
-ID `0`; reason `1` means `SERVER_FULL`. Unsupported versions receive `ERROR`.
+A join request uses sequence `0` and session ID `0`. Join responses use
+sequence `0` and echo the nonce. A rejection has session ID `0`; reason `1`
+means `SERVER_FULL`. The server also rejects new sessions after exhausting its
+nonzero session IDs.
 
-The client retries the same request and nonce every 500 ms, up to 10 attempts.
-While the session is active, the server repeats its acceptance for that nonce
-without creating another player. Reconnecting after leaving requires a new
-nonce.
+The client may retry the same request and nonce every 500 ms, up to 10
+attempts. While the session is active, the server repeats its acceptance for
+that nonce without creating another player. Reconnecting after leaving
+requires a new nonce. The session ID alone selects a session; it has no login
+or identity. A repeated join or valid in-session packet updates the session's
+return address and port.
 
-The session ID alone selects a session; it has no login or identity. The join
-request's source address and port become its return address. A repeated join
-or later valid in-session packet updates that address, even if it differs from
-the original.
+`DISCONNECT` has no payload and requires a nonzero sequence and a valid
+session ID. On disconnect, or after 5 seconds without a valid client packet,
+the server frees the slot and sends `PLAYER_LEFT` to remaining clients. Its
+payload is `server_tick: u64`, `player_id: u8`, `reason: u8`, where reason `1`
+means explicit disconnect and `2` means timeout. The tick counts fixed network
+updates, starting at `1`; it does not represent a simulated world state.
 
-`DISCONNECT` has no payload and requires a nonzero session ID. On disconnect,
-or after 5 seconds without a client packet, the server removes the session and
-ship, frees the slot, and sends `PLAYER_LEFT` to remaining clients. A lost
-`DISCONNECT` delays removal until that timeout. After 5 seconds without a
-server packet, the client treats its session as lost and may rejoin with a new
-nonce.
+A lost `DISCONNECT` delays removal until the timeout. `PLAYER_LEFT` is sent
+once without acknowledgement and may be lost. Until world snapshots are added,
+clients cannot repair a missed departure from server state. Clients should
+continue sending input while connected; this phase sends no periodic server
+heartbeat.
 
-`PLAYER_LEFT` contains `server_tick: u64`, `player_id: u8`, and `reason: u8`
-(`1` = disconnect, `2` = timeout). Snapshot masks also show departures if the
-event is lost.
+## Input commands and timing
 
-## Input and game timing
-
-The server runs at 60 ticks/s, processing joins, leaves, and the latest input
-at tick boundaries. Clients send their full button state on each change and
-every 50 ms, even when idle. This resend replaces lost input and keeps the
-session active; it does not request a reply. Periodic input costs 340 protocol
-bytes/s per player, plus sends on changes. After 250 ms without input, the
-server treats all buttons as released. Dead players still send input to keep
-their session active, but their controls have no gameplay effect.
+The server processes queued datagrams at 60 fixed ticks per second. Clients
+send their full button state on each change and every 50 ms, including when
+idle. Periodic input refreshes the session and replaces lost commands; it does
+not request a reply. After 250 ms without a newer input, the server exposes
+all buttons as released for that tick. The session itself expires after 5
+seconds without a valid client packet.
 
 `PLAYER_INPUT` contains one `u8 buttons` field:
 
@@ -127,17 +123,18 @@ their session active, but their controls have no gameplay effect.
 | 4 | Fire |
 | 5-7 | Reserved; must be zero |
 
-Up + Right + Fire is `00011001` (`0x19`). Opposing directions cancel on their
-axis. Fire stays held; the server applies its firing cooldown. Clients cannot
-command damage, death, enemy movement, or projectile positions.
+Up + Right + Fire is `00011001` (`0x19`). The server retains the latest valid
+input sequence and button state for each session. It discards duplicate or
+older input sequences. Any valid in-session packet updates the session's
+last-heard time, even if its input sequence is old. No movement, shooting, or
+other gameplay action is performed in this phase.
 
-The server discards duplicate or older input sequences. Newer input replaces
-the previous state. Any valid in-session packet updates the session's
-last-heard time. Sequence numbers establish order, not age: a delayed packet
-can briefly apply after the 250 ms timeout if no newer one arrived. A short
-Fire tap can be missed if its only packet is lost.
+`GameServer::tick()` returns `TickInput` with a four-entry `buttons` array and
+a `connectedMask`. A future ECS system can consume that value on each game
+tick. `GameServer::run()` currently schedules these ticks and discards the
+returned value. No separate input queue or command broadcast is implemented.
 
-### What the client renders
+## Packet validation and errors
 
 Clients can predict their own ship from local input and correct it with server
 snapshots. Other entities can be interpolated between snapshots. The server
@@ -238,38 +235,28 @@ collisions, or damage decisions.
 
 For a malformed client datagram with at least the 16-byte header and `RTYP`
 magic, the server sends `ERROR` to its source address and port. It does not
-respond to shorter datagrams, wrong magic, or `ERROR` packets.
-
-`ERROR` always uses protocol version `1`, `sequence = 0`, and
-`session_id = 0`. Its seven-byte payload is:
+respond to shorter datagrams, wrong magic, or `ERROR` packets. `ERROR` uses
+version `1`, sequence `0`, session ID `0`, and this seven-byte payload:
 
 | Offset | Size | Type | Field | Meaning |
 | ---: | ---: | --- | --- | --- |
 | 0 | 1 | `u8` | `code` | Error code below |
-| 1 | 1 | `u8` | `offending_type` | Type byte from the rejected packet |
-| 2 | 4 | `u32` | `offending_sequence` | Sequence from the rejected packet |
+| 1 | 1 | `u8` | `offending_type` | Type byte from rejected packet |
+| 2 | 4 | `u32` | `offending_sequence` | Sequence from rejected packet |
 | 6 | 1 | `u8` | `detail` | Supported version for `UNSUPPORTED_VERSION`; `0` otherwise |
 
 | Code | Name | Cause |
 | ---: | --- | --- |
 | `1` | `UNSUPPORTED_VERSION` | Header version is not `1` |
-| `2` | `INVALID_LENGTH` | Datagram exceeds 1200 bytes or its length does not match the message layout |
+| `2` | `INVALID_LENGTH` | Datagram exceeds 1200 bytes or its length does not match |
 | `3` | `UNKNOWN_TYPE` | Type byte has no definition in version `1` |
 | `4` | `WRONG_DIRECTION` | A client sent a server-only packet |
-| `5` | `INVALID_SESSION` | An in-session packet has `0` or an unknown session ID |
-| `6` | `INVALID_FIELD` | A field is outside its allowed values, including reserved bits |
+| `5` | `INVALID_SESSION` | An in-session packet has an unknown session ID |
+| `6` | `INVALID_FIELD` | A field is outside its allowed values |
 
-Report the first failure in this order: version → datagram size and declared
-length → known type → direction → session → type-specific payload length →
-field values. Both length checks use `INVALID_LENGTH`. For
-`UNSUPPORTED_VERSION`, `detail = 1` names the supported version. Clients accept
-`ERROR` with session ID `0` even after joining and match it by
-`offending_type` and `offending_sequence`. An unsupported-version error ends
-the join attempt; report the mismatch instead of retrying.
-
-A version `2` `JOIN_REQUEST` with the common header gets
-`UNSUPPORTED_VERSION` with `detail = 1`. Events have no acknowledgements or
-retransmissions.
+Report the first failure in this order: version, datagram size and declared
+length, known type, direction, session, type-specific payload length, then
+field values. An unsupported-version error has `detail = 1`.
 
 ## Example input datagram
 

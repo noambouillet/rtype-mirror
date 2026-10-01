@@ -1,0 +1,168 @@
+/*
+** EPITECH PROJECT, 2026
+** R-Type
+** File description:
+** Protocol implementation
+*/
+
+#include "Protocol.hpp"
+
+#include <algorithm>
+
+namespace rtype::network {
+
+static bool isKnownType(std::uint8_t type)
+{
+	switch (static_cast<PacketType>(type)) {
+		case PacketType::JoinRequest:
+		case PacketType::JoinAccepted:
+		case PacketType::JoinRejected:
+		case PacketType::Disconnect:
+		case PacketType::PlayerLeft:
+		case PacketType::PlayerInput:
+		case PacketType::Error:
+			return true;
+	}
+	return false;
+}
+
+/// Appends a 16-bit integer in network byte order.
+void appendU16(std::vector<std::uint8_t>& bytes, std::uint16_t value)
+{
+	bytes.push_back(static_cast<std::uint8_t>(value >> 8));
+	bytes.push_back(static_cast<std::uint8_t>(value));
+}
+
+/// Appends a 32-bit integer in network byte order.
+void appendU32(std::vector<std::uint8_t>& bytes, std::uint32_t value)
+{
+	for (int shift = 24; shift >= 0; shift -= 8) {
+		bytes.push_back(static_cast<std::uint8_t>(value >> shift));
+	}
+}
+
+/// Appends a 64-bit integer in network byte order.
+void appendU64(std::vector<std::uint8_t>& bytes, std::uint64_t value)
+{
+	for (int shift = 56; shift >= 0; shift -= 8) {
+		bytes.push_back(static_cast<std::uint8_t>(value >> shift));
+	}
+}
+
+/// Reads a network-order 32-bit integer from previously validated bytes.
+std::uint32_t readU32(const std::vector<std::uint8_t>& bytes, std::size_t offset)
+{
+	return (static_cast<std::uint32_t>(bytes[offset]) << 24) |
+		   (static_cast<std::uint32_t>(bytes[offset + 1]) << 16) |
+		   (static_cast<std::uint32_t>(bytes[offset + 2]) << 8) |
+		   static_cast<std::uint32_t>(bytes[offset + 3]);
+}
+
+/// Reads a network-order 64-bit integer from previously validated bytes.
+std::uint64_t readU64(const std::vector<std::uint8_t>& bytes, std::size_t offset)
+{
+	return (static_cast<std::uint64_t>(readU32(bytes, offset)) << 32) |
+		   readU32(bytes, offset + 4);
+}
+
+/// Validates the common header and client-to-server packet direction.
+/// Invalid magic and short datagrams yield neither a header nor an error.
+ParsedHeader parseClientHeader(const std::vector<std::uint8_t>& bytes)
+{
+	ParsedHeader result{};
+	if (bytes.size() < HEADER_SIZE ||
+		!std::equal(MAGIC.begin(), MAGIC.end(), bytes.begin())) {
+		return result;
+	}
+
+	result.offendingType = bytes[5];
+	result.offendingSequence = readU32(bytes, 8);
+	if (bytes[5] == static_cast<std::uint8_t>(PacketType::Error)) {
+		return result;
+	}
+	if (bytes[4] != VERSION) {
+		result.error = ErrorCode::UnsupportedVersion;
+	} else if (bytes.size() > MAX_DATAGRAM_SIZE || bytes.size() != HEADER_SIZE + (static_cast<std::uint16_t>(bytes[6]) << 8 | bytes[7])) {
+		result.error = ErrorCode::InvalidLength;
+	} else if (!isKnownType(bytes[5])) {
+		result.error = ErrorCode::UnknownType;
+	} else if (bytes[5] != static_cast<std::uint8_t>(PacketType::JoinRequest) &&
+			   bytes[5] != static_cast<std::uint8_t>(PacketType::Disconnect) &&
+			   bytes[5] != static_cast<std::uint8_t>(PacketType::PlayerInput)) {
+		// If the client sends an ERROR packet, he never receives an ERROR in response.
+		if (bytes[5] != static_cast<std::uint8_t>(PacketType::Error)) {
+			result.error = ErrorCode::WrongDirection;
+		}
+	} else {
+		result.header = Header{
+			.type = static_cast<PacketType>(bytes[5]),
+			.payloadSize = static_cast<std::uint16_t>(bytes[6] << 8 | bytes[7]),
+			.sequence = result.offendingSequence,
+			.sessionId = readU32(bytes, 12)};
+	}
+	return result;
+}
+
+/// Validates the payload and field ranges after the caller checks the session.
+std::optional<ErrorCode> validateClientPayload(const Header& header, const std::vector<std::uint8_t>& bytes)
+{
+	if (header.type == PacketType::JoinRequest) {
+		if (header.payloadSize != 8) {
+			return ErrorCode::InvalidLength;
+		}
+		if (header.sequence != 0 || header.sessionId != 0) {
+			return ErrorCode::InvalidField;
+		}
+	} else if (header.type == PacketType::Disconnect) {
+		if (header.payloadSize != 0) {
+			return ErrorCode::InvalidLength;
+		}
+		if (header.sequence == 0) {
+			return ErrorCode::InvalidField;
+		}
+	} else if (header.type == PacketType::PlayerInput) {
+		if (header.payloadSize != 1) {
+			return ErrorCode::InvalidLength;
+		}
+		if (header.sequence == 0 || (bytes[HEADER_SIZE] & 0xe0) != 0) {
+			return ErrorCode::InvalidField;
+		}
+	}
+	return std::nullopt;
+}
+
+/// Builds a version 1 datagram, or an empty vector if it exceeds the MTU.
+std::vector<std::uint8_t> makePacket(PacketType type, std::uint32_t sequence,
+	std::uint32_t sessionId, const std::vector<std::uint8_t>& payload)
+{
+	if (payload.size() > MAX_DATAGRAM_SIZE - HEADER_SIZE) {
+		return {};
+	}
+	std::vector<std::uint8_t> bytes;
+	bytes.reserve(HEADER_SIZE + payload.size());
+	bytes.insert(bytes.end(), MAGIC.begin(), MAGIC.end());
+	bytes.push_back(VERSION);
+	bytes.push_back(static_cast<std::uint8_t>(type));
+	appendU16(bytes, static_cast<std::uint16_t>(payload.size()));
+	appendU32(bytes, sequence);
+	appendU32(bytes, sessionId);
+	bytes.insert(bytes.end(), payload.begin(), payload.end());
+	return bytes;
+}
+
+/// Builds the protocol error response for a rejected client datagram.
+std::vector<std::uint8_t> makeError(ErrorCode code, const ParsedHeader& rejected)
+{
+	std::vector<std::uint8_t> payload{static_cast<std::uint8_t>(code), rejected.offendingType};
+	appendU32(payload, rejected.offendingSequence);
+	payload.push_back(code == ErrorCode::UnsupportedVersion ? VERSION : 0);
+	return makePacket(PacketType::Error, 0, 0, payload);
+}
+
+/// Returns whether "candidate" follows "previous" in the RFC sequence order.
+bool isNewerSequence(std::uint32_t candidate, std::uint32_t previous)
+{
+	return candidate != previous && candidate - previous < HALF_SEQUENCE;
+}
+
+}
