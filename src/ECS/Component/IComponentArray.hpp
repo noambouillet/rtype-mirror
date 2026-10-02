@@ -11,9 +11,9 @@
 
 namespace rtype::ecs {
 class IComponentArray {
-    public:
-        IComponentArray() = default;
-        virtual ~IComponentArray() = default;
-        virtual void entityDestroyed(Entity e) = 0;
+public:
+	IComponentArray() = default;
+	virtual ~IComponentArray() = default;
+	virtual void entityDestroyed(Entity e) = 0;
 };
-} // namepsace rtype::ecs
+}  // namepsace rtype::ecs

@@ -14,10 +14,10 @@
 namespace rtype::ecs {
 
 class System {
- public:
-  virtual ~System() = default;
+public:
+	virtual ~System() = default;
 
-  std::set<Entity> entities;
+	std::set<Entity> entities;
 };
 
 }  // namespace rtype::ecs

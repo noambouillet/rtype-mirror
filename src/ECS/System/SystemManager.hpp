@@ -18,25 +18,25 @@
 namespace rtype::ecs {
 
 class SystemManager {
- public:
-  SystemManager() = default;
-  ~SystemManager() = default;
+public:
+	SystemManager() = default;
+	~SystemManager() = default;
 
-  template <typename T>
-  T& registerSystem();
+	template <typename T>
+	T& registerSystem();
 
-  template <typename T>
-  void setSignature(Signature signature);
+	template <typename T>
+	void setSignature(Signature signature);
 
-  template <typename T>
-  [[nodiscard]] T& getSystem();
+	template <typename T>
+	[[nodiscard]] T& getSystem();
 
-  void entityDestroyed(Entity entity);
-  void entitySignatureChanged(Entity entity, Signature entitySignature);
+	void entityDestroyed(Entity entity);
+	void entitySignatureChanged(Entity entity, Signature entitySignature);
 
- private:
-  std::unordered_map<std::type_index, Signature> _signatures;
-  std::unordered_map<std::type_index, std::unique_ptr<System>> _systems;
+private:
+	std::unordered_map<std::type_index, Signature> _signatures;
+	std::unordered_map<std::type_index, std::unique_ptr<System>> _systems;
 };
 
 }  // namespace rtype::ecs
