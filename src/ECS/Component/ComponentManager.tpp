@@ -28,10 +28,10 @@ void ComponentManager::registerComponent()
 template<typename T>
 ComponentType ComponentManager::getType()
 {
-    auto it = _types.find(std::type_index(typeid(T)));
-    assert(it != _types.end() && "component doesn't exist");
+    auto id = _types.find(std::type_index(typeid(T)));
+    assert(id != _types.end() && "component doesn't exist");
 
-    return it->second;
+    return id->second;
 }
 
 ///Add a component of type T to the given entity.
