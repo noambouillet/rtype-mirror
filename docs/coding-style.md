@@ -3,7 +3,9 @@
 Formatting and comment conventions are based on the
 [Google C++ Style Guide](https://google.github.io/styleguide/cppguide.html).
 Our naming convention differs from Google's (see [Naming](#naming)).
-Commit and Git workflow rules are in [contributing.md](contributing.md).
+Commit rules are in [contributing.md](contributing.md).
+
+<a id="naming"></a>
 
 ## Naming
 
@@ -41,25 +43,26 @@ enum class Direction { Up, Down, Left, Right };
 constexpr int MAX_PLAYERS = 4;
 
 class Player {
- public:
-  explicit Player(int health);
-  void takeDamage(int amount);
+    private:
+        static constexpr int MAX_HEALTH = 100;
+        int _health;
 
-  float speed;
+    public:
+        explicit Player(int health);
 
- private:
-  static constexpr int MAX_HEALTH = 100;
-  int _health;
+        void takeDamage(int amount);
+
+        float speed;
 };
 
-Player::Player(int health) : speed(1.0f), _health(health)
+Player::Player(int health) : speed(1.0), _health(health)
 {
 }
 
 void Player::takeDamage(int amount)
 {
-  const int remaining = _health - amount;
-  _health = remaining;
+    const int remaining = _health - amount;
+    _health = remaining;
 }
 ```
 
@@ -130,7 +133,7 @@ Not needed:
 /// The iterator must not outlive the table.
 std::unique_ptr<Iterator> Table::getIterator(std::string_view startWord) const
 {
-  return findIterator(startWord);
+    return findIterator(startWord);
 }
 
 /// Resamples the audio buffer to a new sample rate.
@@ -139,9 +142,11 @@ std::unique_ptr<Iterator> Table::getIterator(std::string_view startWord) const
 /// @param buf   Modified in place; must not be empty.
 void resample(AudioBuffer& buf, double ratio)
 {
-  buf.resample(ratio);
+    buf.resample(ratio);
 }
 ```
+
+<a id="tooling"></a>
 
 ## Tooling
 
