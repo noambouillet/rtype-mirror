@@ -17,7 +17,7 @@ jobs:
           submodules: recursive
 
       - name: Install System Dependencies
-        run: sudo apt-get update && sudo apt-get install -y curl zip unzip tar libx11-dev libxcursor-dev libxi-dev libgl1-mesa-dev libfontconfig1-dev libudev-dev
+        run: sudo apt-get update && sudo apt-get install -y curl zip unzip tar cmake libx11-dev libxcursor-dev libxi-dev libgl1-mesa-dev libfontconfig1-dev libudev-dev
 
       - name: Export GitHub Actions cache environment variables
         uses: actions/github-script@v9
