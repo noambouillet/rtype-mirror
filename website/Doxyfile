@@ -4,7 +4,8 @@ OUTPUT_DIRECTORY       = website/_site
 HTML_OUTPUT            = .
 
 INPUT                  = website/index.md docs src
-FILE_PATTERNS          = *.md *.hpp *.cpp
+FILE_PATTERNS          = *.md *.hpp *.cpp *.tpp
+EXTENSION_MAPPING      = tpp=C++
 RECURSIVE              = YES
 USE_MDFILE_AS_MAINPAGE = website/index.md
 MARKDOWN_SUPPORT       = YES
