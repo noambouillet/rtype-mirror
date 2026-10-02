@@ -39,9 +39,9 @@ class Coordinator {
         template<typename T>
         T& getSystem();
     private:
-        EntityManager _entities;
-        ComponentManager _components;
-        SystemManager _systems;
+        EntityManager _entitiesManager;
+        ComponentManager _componentsManager;
+        SystemManager _systemsManager;
 };
 } // namespace rtype::ecs
 

@@ -11,12 +11,12 @@
 
 namespace rtype::ecs {
 Coordinator::Coordinator(std::size_t maxEntities)
-    : _entities(maxEntities), _components(_entities.maxEntities()) {}
+    : _entitiesManager(maxEntities), _componentsManager(_entitiesManager.maxEntities()) {}
 
 ///Create a new entity. Throws if the maximum number of entities is reached.
 Entity Coordinator::createEntity()
 {
-    std::optional<Entity> newEntity = _entities.create();
+    std::optional<Entity> newEntity = _entitiesManager.create();
 
     if (!newEntity)
         throw CoordinatorError("max entities reached");
@@ -27,15 +27,15 @@ Entity Coordinator::createEntity()
 ///Does nothing if the handle is stale or already dead.
 void Coordinator::destroyEntity(Entity e)
 {
-    if (!_entities.destroy(e))
+    if (!_entitiesManager.destroy(e))
         return;
-    _components.entityDestroyed(e);
-    _systems.entityDestroyed(e);
+    _componentsManager.entityDestroyed(e);
+    _systemsManager.entityDestroyed(e);
 }
 
 ///Tell whether the given entity handle still refers to a living entity.
 bool Coordinator::isAlive(Entity e) const
 {
-    return _entities.isAlive(e);
+    return _entitiesManager.isAlive(e);
 }
 } // namespace rtype::ecs
