@@ -5,6 +5,8 @@ Formatting and comment conventions are based on the
 Our naming convention differs from Google's (see [Naming](#naming)).
 Commit and Git workflow rules are in [contributing.md](contributing.md).
 
+<a id="naming"></a>
+
 ## Naming
 
 | Element                                                 | Convention             | Example         |
@@ -142,6 +144,8 @@ void resample(AudioBuffer& buf, double ratio)
   buf.resample(ratio);
 }
 ```
+
+<a id="tooling"></a>
 
 ## Tooling
 

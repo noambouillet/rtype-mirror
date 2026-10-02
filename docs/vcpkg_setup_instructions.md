@@ -62,3 +62,18 @@ The UDP smoke test requires Python 3 and local UDP socket access:
 ```bash
 ctest --test-dir build --output-on-failure
 ```
+
+### Documentation website
+
+Install Doxygen and CMake to build the documentation site. From the repository root:
+
+```bash
+cmake -P website/fetch_theme.cmake
+doxygen website/Doxyfile
+python3 -m http.server 8000 --directory website/_site
+```
+
+Open <http://localhost:8000/> to browse the rendered `docs/` guides and C++
+API comments. The GitHub Pages workflow builds this site on pushes to `main`
+and `dev` and on pull requests targeting `main`. It publishes after a push to
+`main` when Pages uses the **GitHub Actions** source.

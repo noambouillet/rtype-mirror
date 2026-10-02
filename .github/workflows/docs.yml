@@ -1,0 +1,52 @@
+name: Documentation
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+  pages: read
+
+jobs:
+  build:
+    runs-on: self-hosted
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v7
+
+      - name: Install Doxygen
+        run: sudo apt-get update && sudo apt-get install -y doxygen
+
+      - name: Download documentation theme
+        run: cmake -P website/fetch_theme.cmake
+
+      - name: Build site
+        run: doxygen website/Doxyfile
+
+      - name: Configure GitHub Pages
+        if: github.event_name == 'push'
+        uses: actions/configure-pages@v6
+
+      - name: Upload site
+        if: github.event_name == 'push'
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: website/_site
+
+  deploy:
+    if: github.event_name == 'push'
+    needs: build
+    runs-on: self-hosted
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v5
