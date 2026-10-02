@@ -13,7 +13,7 @@ jobs:
           submodules: recursive
 
       - name: Install system dependencies and tools
-        run: sudo apt-get update && sudo apt-get install -y clang-tidy python3-venv libx11-dev libxcursor-dev libxi-dev libgl1-mesa-dev libfontconfig1-dev libudev-dev
+        run: sudo apt-get update && sudo apt-get install -y clang-tidy python3-venv
 
       - name: Install pinned clang-format
         run: |
@@ -29,22 +29,6 @@ jobs:
           else
             echo 'No C++ files to format.'
           fi
-
-      - name: Export GitHub Actions cache environment variables
-        uses: actions/github-script@v9
-        with:
-          script: |
-            core.exportVariable('ACTIONS_CACHE_URL', process.env.ACTIONS_CACHE_URL || '');
-            core.exportVariable('ACTIONS_RUNTIME_TOKEN', process.env.ACTIONS_RUNTIME_TOKEN || '');
-
-      - name: Set up Vcpkg Binary Cache
-        run: echo "VCPKG_BINARY_SOURCES=clear;x-gha,readwrite" >> $GITHUB_ENV
-
-      - name: Bootstrap Vcpkg
-        run: ./vcpkg/bootstrap-vcpkg.sh
-
-      - name: Generate compile_commands.json
-        run: cmake -S . -B build -DCMAKE_TOOLCHAIN_FILE=vcpkg/scripts/buildsystems/vcpkg.cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
 
       - name: clang-tidy
         run: |
