@@ -1,3 +1,4 @@
+# Members are initialized in constructors per SKILLS/coding-style.md.
 Checks: >
   -*,
   clang-analyzer-*,
@@ -5,6 +6,8 @@ Checks: >
   modernize-*,
   performance-*,
   readability-*,
+  -modernize-use-nodiscard,
+  -modernize-use-default-member-init,
   -modernize-use-trailing-return-type,
   -readability-magic-numbers,
   -readability-identifier-length

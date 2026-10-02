@@ -3,6 +3,8 @@
 /build-*/
 /cmake-build-*/
 /out/
+/website/_site/
+/website/_theme/
 /CMakeFiles/
 /CMakeCache.txt
 /CMakeUserPresets.json
@@ -51,6 +53,7 @@
 /.vscode/
 /.idea/
 /.vs/
+/.cache/
 *.swp
 *.swo
 .DS_Store

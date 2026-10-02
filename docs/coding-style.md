@@ -3,7 +3,9 @@
 Formatting and comment conventions are based on the
 [Google C++ Style Guide](https://google.github.io/styleguide/cppguide.html).
 Our naming convention differs from Google's (see [Naming](#naming)).
-Commit and Git workflow rules are in [contributing.md](contributing.md).
+Commit rules are in [contributing.md](contributing.md).
+
+<a id="naming"></a>
 
 ## Naming
 
@@ -41,20 +43,26 @@ enum class Direction { Up, Down, Left, Right };
 constexpr int MAX_PLAYERS = 4;
 
 class Player {
- public:
-  explicit Player(int health) : _health(health) {}
-  void takeDamage(int amount);
+    private:
+        static constexpr int MAX_HEALTH = 100;
+        int _health;
 
-  float speed = 1.0f;  // public member: no prefix
+    public:
+        explicit Player(int health);
 
- private:
-  static constexpr int MAX_HEALTH = 100;  // constant: UPPER_CASE
-  int _health;                            // private member: `_` prefix
+        void takeDamage(int amount);
+
+        float speed;
 };
 
-void Player::takeDamage(int amount) {
-  const int remaining = _health - amount;  // runtime const: camelCase
-  _health = remaining;
+Player::Player(int health) : speed(1.0), _health(health)
+{
+}
+
+void Player::takeDamage(int amount)
+{
+    const int remaining = _health - amount;
+    _health = remaining;
 }
 ```
 
@@ -82,15 +90,16 @@ These rules are enforced by clang-tidy (see [Tooling](#tooling)).
 | `///`  | Documentation comment | Yes                          |
 | `//`   | Normal comment        | No                           |
 
-- Use `///` **above declarations** (functions, classes, members, enums) to
-  describe **what it is for** and how to use it.
+- Use `///` **above function definitions in `.cpp` files** to describe what
+  each function is for and how to use it. See `SKILLS/coding-style.md` for
+  project-specific placement rules.
 - Use `//` **inside function bodies** for **how or why** notes (tricky logic,
   workarounds, non-obvious choices).
 - Don't state the obvious in either kind.
 
 ### Function documentation
 
-Almost every function gets a `///` comment directly above its declaration.
+Almost every function gets a `///` comment directly above its definition.
 Skip it only for simple, obvious functions (trivial accessors, etc.).
 
 - The first sentence is the summary. It starts with a verb phrase, with "This
@@ -122,28 +131,57 @@ Not needed:
 /// Returns an iterator positioned at the first entry lexically greater than
 /// or equal to `startWord`. Returns a null pointer if there is no such entry.
 /// The iterator must not outlive the table.
-std::unique_ptr<Iterator> getIterator(std::string_view startWord) const;
+std::unique_ptr<Iterator> Table::getIterator(std::string_view startWord) const
+{
+    return findIterator(startWord);
+}
 
 /// Resamples the audio buffer to a new sample rate.
 ///
 /// @param ratio Output rate / input rate (e.g. 0.5 halves the rate).
 /// @param buf   Modified in place; must not be empty.
-void resample(AudioBuffer& buf, double ratio);
+void resample(AudioBuffer& buf, double ratio)
+{
+    buf.resample(ratio);
+}
 ```
+
+<a id="tooling"></a>
 
 ## Tooling
 
 Style is enforced by tools, not by review comments. Two config files at the
-repository root define the rules. Install `clang-format` and `clang-tidy`
-(LLVM 16 or newer recommended).
+repository root define the rules. Install `clang-format` at the version in
+`.clang-format-version`; install `clang-tidy` (LLVM 16 or newer recommended)
+only if you want to run the optional local analysis. CI installs the pinned
+formatter, and the pre-commit hook checks it for staged C++ files.
 
 ### `.clang-format`
 
 ```yaml
 BasedOnStyle: Google
+ColumnLimit: 0
+IndentWidth: 4
+TabWidth: 4
+UseTab: ForContinuationAndIndentation
+AccessModifierOffset: -4
+AlignAfterOpenBracket: DontAlign
+FixNamespaceComments: false
+BreakBeforeBraces: Custom
+BraceWrapping:
+  AfterFunction: true
+AllowShortFunctionsOnASingleLine: None
 ```
 
-We use the Google preset unchanged. Do not commit the output of
+We use the Google preset without automatic line wrapping. Source indentation
+uses four-column tabs for indentation. Access labels align with the class
+declaration, and class and struct members have one tab of indentation.
+Wrapped parameter lines use one continuation tab instead of aligning under
+the opening parenthesis.
+Clang-format does not add namespace closing comments and places each function
+definition's opening brace on the next line. This includes short and inline
+functions; control statements keep their Google-style braces. Do not commit
+the output of
 `clang-format -dump-config`: it pins every option and breaks on other
 clang-format versions.
 
@@ -157,6 +195,7 @@ Checks: >
   modernize-*,
   performance-*,
   readability-*,
+  -modernize-use-nodiscard,
   -modernize-use-trailing-return-type,
   -readability-magic-numbers,
   -readability-identifier-length
@@ -203,6 +242,16 @@ CheckOptions:
 
 Run from the repository root.
 
+Install the pinned formatter in a Python virtual environment and put it on
+your `PATH` before running the commands below:
+
+```sh
+python3 -m venv /tmp/rtype-clang-format
+/tmp/rtype-clang-format/bin/python -m pip install "clang-format==$(cat .clang-format-version)"
+export PATH="/tmp/rtype-clang-format/bin:$PATH"
+clang-format --version
+```
+
 ```sh
 # Format one file in place
 clang-format -i src/foo.cpp
@@ -214,13 +263,13 @@ git ls-files -z '*.cpp' '*.hpp' | xargs -0 -r clang-format -i
 git ls-files -z '*.cpp' '*.hpp' | xargs -0 -r clang-format --dry-run --Werror
 ```
 
-Static analysis needs a build directory containing `compile_commands.json`.
-CI skips this step until `src` contains a `.cpp` file; after that, the project
-must provide a root `CMakeLists.txt`.
+Clang-tidy is an optional local check and is not run in CI. It needs a build
+directory containing `compile_commands.json` so it can use the project's
+compiler flags and include paths.
 
 ```sh
 # 1. Configure once, so clang-tidy knows the real build flags
-cmake -S . -B build -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+cmake -S . -B build -DCMAKE_TOOLCHAIN_FILE=vcpkg/scripts/buildsystems/vcpkg.cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
 
 # 2. Analyze one file
 clang-tidy -p build src/foo.cpp

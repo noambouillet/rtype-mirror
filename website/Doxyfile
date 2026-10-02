@@ -1,0 +1,26 @@
+PROJECT_NAME           = "R-Type"
+PROJECT_BRIEF          = "Project documentation and server API"
+OUTPUT_DIRECTORY       = website/_site
+HTML_OUTPUT            = .
+
+INPUT                  = website/index.md docs src
+FILE_PATTERNS          = *.md *.hpp *.cpp *.tpp
+EXTENSION_MAPPING      = tpp=C++
+RECURSIVE              = YES
+USE_MDFILE_AS_MAINPAGE = website/index.md
+MARKDOWN_SUPPORT       = YES
+
+EXTRACT_ALL            = YES
+FULL_PATH_NAMES        = NO
+GENERATE_HTML          = YES
+GENERATE_TREEVIEW      = YES
+DISABLE_INDEX          = NO
+FULL_SIDEBAR           = NO
+HTML_COLORSTYLE        = LIGHT
+HTML_EXTRA_STYLESHEET  = website/_theme/doxygen-awesome.css \
+                          website/_theme/doxygen-awesome-sidebar-only.css
+GENERATE_LATEX         = NO
+HAVE_DOT               = NO
+
+QUIET                  = YES
+WARNINGS               = YES

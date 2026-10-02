@@ -1,12 +1,25 @@
 #!/usr/bin/env bash
 # Check the staged content, including files with spaces in their names.
-set -o pipefail
+set -euo pipefail
 
-git diff --cached --name-only -z --diff-filter=ACMR -- '*.cpp' '*.hpp' |
-  while IFS= read -r -d '' file; do
-    if ! git show ":$file" |
-      clang-format --dry-run --Werror --assume-filename="$file"; then
-      printf '%s: staged content is not formatted. Run clang-format -i, then stage it again.\n' "$file" >&2
-      exit 1
-    fi
-  done
+git diff --cached --name-only -z --diff-filter=ACMR -- '*.cpp' '*.hpp' >/dev/null
+mapfile -d '' files < <(git diff --cached --name-only -z --diff-filter=ACMR -- '*.cpp' '*.hpp')
+((${#files[@]})) || exit 0
+
+expected=$(<.clang-format-version)
+actual=$(clang-format --version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -n1 || true)
+
+if [[ $actual != "$expected" ]]; then
+  echo "clang-format $expected required; found ${actual:-none}." >&2
+  echo "See docs/coding-style.md for installation instructions." >&2
+  exit 1
+fi
+
+status=0
+for file in "${files[@]}"; do
+  if ! git show ":$file" | clang-format --dry-run --Werror --assume-filename="$file"; then
+    echo "$file: staged content is not formatted. Run clang-format -i, then stage it again." >&2
+    status=1
+  fi
+done
+exit "$status"
