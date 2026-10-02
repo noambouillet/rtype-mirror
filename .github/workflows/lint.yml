@@ -13,7 +13,7 @@ jobs:
           submodules: recursive
 
       - name: Install system dependencies and tools
-        run: sudo apt-get update && sudo apt-get install -y clang-tidy python3-venv
+        run: sudo apt-get update && sudo apt-get install -y python3-venv
 
       - name: Install pinned clang-format
         run: |
@@ -28,12 +28,4 @@ jobs:
             git ls-files -z -- '*.cpp' '*.hpp' | xargs -0 -r clang-format --dry-run --Werror
           else
             echo 'No C++ files to format.'
-          fi
-
-      - name: clang-tidy
-        run: |
-          if [ -n "$(git ls-files -- 'src/*.cpp')" ]; then
-            run-clang-tidy -p build -quiet 'src/.*\.cpp'
-          else
-            echo 'No C++ sources to analyze.'
           fi

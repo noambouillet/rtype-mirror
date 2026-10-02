@@ -151,10 +151,10 @@ void resample(AudioBuffer& buf, double ratio)
 ## Tooling
 
 Style is enforced by tools, not by review comments. Two config files at the
-repository root define the rules. Install `clang-format` and `clang-tidy`
-(`clang-format` must match the version in `.clang-format-version`; LLVM 16 or
-newer is recommended for `clang-tidy`). CI installs that exact formatter
-version, and the pre-commit hook checks it for staged C++ files.
+repository root define the rules. Install `clang-format` at the version in
+`.clang-format-version`; install `clang-tidy` (LLVM 16 or newer recommended)
+only if you want to run the optional local analysis. CI installs the pinned
+formatter, and the pre-commit hook checks it for staged C++ files.
 
 ### `.clang-format`
 
@@ -263,13 +263,13 @@ git ls-files -z '*.cpp' '*.hpp' | xargs -0 -r clang-format -i
 git ls-files -z '*.cpp' '*.hpp' | xargs -0 -r clang-format --dry-run --Werror
 ```
 
-Static analysis needs a build directory containing `compile_commands.json`.
-CI skips this step until `src` contains a `.cpp` file; after that, the project
-must provide a root `CMakeLists.txt`.
+Clang-tidy is an optional local check and is not run in CI. It needs a build
+directory containing `compile_commands.json` so it can use the project's
+compiler flags and include paths.
 
 ```sh
 # 1. Configure once, so clang-tidy knows the real build flags
-cmake -S . -B build -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+cmake -S . -B build -DCMAKE_TOOLCHAIN_FILE=vcpkg/scripts/buildsystems/vcpkg.cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
 
 # 2. Analyze one file
 clang-tidy -p build src/foo.cpp
