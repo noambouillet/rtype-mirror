@@ -6,6 +6,7 @@
 */
 
 #include "Coordinator.hpp"
+#include "EcsError.hpp"
 #include <stdexcept>
 
 namespace rtype::ecs {
@@ -18,7 +19,7 @@ Entity Coordinator::createEntity()
     std::optional<Entity> newEntity = _entities.create();
 
     if (!newEntity)
-        throw std::runtime_error("Coordinator: max entities reached");
+        throw CoordinatorError("max entities reached");
     return *newEntity;
 }
 
