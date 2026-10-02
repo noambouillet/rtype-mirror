@@ -152,7 +152,9 @@ void resample(AudioBuffer& buf, double ratio)
 
 Style is enforced by tools, not by review comments. Two config files at the
 repository root define the rules. Install `clang-format` and `clang-tidy`
-(LLVM 16 or newer recommended).
+(`clang-format` must match the version in `.clang-format-version`; LLVM 16 or
+newer is recommended for `clang-tidy`). CI installs that exact formatter
+version, and the pre-commit hook checks it for staged C++ files.
 
 ### `.clang-format`
 
@@ -239,6 +241,16 @@ CheckOptions:
 ### Commands
 
 Run from the repository root.
+
+Install the pinned formatter in a Python virtual environment and put it on
+your `PATH` before running the commands below:
+
+```sh
+python3 -m venv /tmp/rtype-clang-format
+/tmp/rtype-clang-format/bin/python -m pip install "clang-format==$(cat .clang-format-version)"
+export PATH="/tmp/rtype-clang-format/bin:$PATH"
+clang-format --version
+```
 
 ```sh
 # Format one file in place

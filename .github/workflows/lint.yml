@@ -13,10 +13,17 @@ jobs:
           submodules: recursive
 
       - name: Install system dependencies and tools
-        run: sudo apt-get update && sudo apt-get install -y clang-format clang-tidy libx11-dev libxcursor-dev libxi-dev libgl1-mesa-dev libfontconfig1-dev libudev-dev
+        run: sudo apt-get update && sudo apt-get install -y clang-tidy python3-venv libx11-dev libxcursor-dev libxi-dev libgl1-mesa-dev libfontconfig1-dev libudev-dev
+
+      - name: Install pinned clang-format
+        run: |
+          python3 -m venv "$RUNNER_TEMP/clang-format"
+          "$RUNNER_TEMP/clang-format/bin/python" -m pip install --disable-pip-version-check "clang-format==$(cat .clang-format-version)"
+          echo "$RUNNER_TEMP/clang-format/bin" >> "$GITHUB_PATH"
 
       - name: clang-format
         run: |
+          clang-format --version
           if [ -n "$(git ls-files -- '*.cpp' '*.hpp')" ]; then
             git ls-files -z -- '*.cpp' '*.hpp' | xargs -0 -r clang-format --dry-run --Werror
           else
