@@ -11,7 +11,7 @@
 #include <limits>
 #include <thread>
 
-#include "network/Protocol.hpp"
+#include "utils/network/Protocol.hpp"
 
 namespace rtype {
 

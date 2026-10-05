@@ -103,6 +103,71 @@ ParsedHeader parseClientHeader(const std::vector<std::uint8_t>& bytes)
 	return result;
 }
 
+/// Checks the implemented join response fields.
+static bool validJoinReply(const Header& header, const std::vector<std::uint8_t>& bytes)
+{
+	if (header.payloadSize != 9 || header.sequence != 0) {
+		return false;
+	}
+	if (header.type == PacketType::JoinAccepted) {
+		return header.sessionId != 0 && bytes[HEADER_SIZE + 8] <= 3;
+	}
+	return header.sessionId == 0 && bytes[HEADER_SIZE + 8] == 1;
+}
+
+/// Checks the implemented session notice fields.
+static bool validSessionNotice(const Header& header, const std::vector<std::uint8_t>& bytes)
+{
+	return header.payloadSize == 10 && header.sequence != 0 && header.sessionId != 0 &&
+		   bytes[HEADER_SIZE + 8] <= 3 && (bytes[HEADER_SIZE + 9] == 1 || bytes[HEADER_SIZE + 9] == 2);
+}
+
+/// Checks the implemented protocol error fields.
+static bool validErrorNotice(const Header& header, const std::vector<std::uint8_t>& bytes)
+{
+	return header.payloadSize == 7 && header.sequence == 0 && header.sessionId == 0 &&
+		   bytes[HEADER_SIZE] >= 1 && bytes[HEADER_SIZE] <= 6 &&
+		   bytes[HEADER_SIZE + 6] == (bytes[HEADER_SIZE] == 1 ? VERSION : 0);
+}
+
+/// Validates the fields specific to implemented server packet types.
+static bool validServerPayload(const Header& header, const std::vector<std::uint8_t>& bytes)
+{
+	switch (header.type) {
+		case PacketType::JoinAccepted:
+		case PacketType::JoinRejected:
+			return validJoinReply(header, bytes);
+		case PacketType::PlayerLeft:
+			return validSessionNotice(header, bytes);
+		case PacketType::Error:
+			return validErrorNotice(header, bytes);
+		default:
+			return false;
+	}
+}
+
+/// Validates the common header and the implemented server-to-client packets.
+std::optional<Header> parseServerHeader(const std::vector<std::uint8_t>& bytes)
+{
+	if (bytes.size() < HEADER_SIZE || bytes.size() > MAX_DATAGRAM_SIZE ||
+		!std::equal(MAGIC.begin(), MAGIC.end(), bytes.begin()) || bytes[4] != VERSION) {
+		return std::nullopt;
+	}
+	const auto payloadSize = static_cast<std::uint16_t>((static_cast<std::uint16_t>(bytes[6]) << 8) | bytes[7]);
+	if (bytes.size() != HEADER_SIZE + payloadSize) {
+		return std::nullopt;
+	}
+	Header header;
+	header.type = static_cast<PacketType>(bytes[5]);
+	header.payloadSize = payloadSize;
+	header.sequence = readU32(bytes, 8);
+	header.sessionId = readU32(bytes, 12);
+	if (!validServerPayload(header, bytes)) {
+		return std::nullopt;
+	}
+	return header;
+}
+
 /// Validates the payload and field ranges after the caller checks the session.
 std::optional<ErrorCode> validateClientPayload(const Header& header, const std::vector<std::uint8_t>& bytes)
 {
@@ -124,7 +189,7 @@ std::optional<ErrorCode> validateClientPayload(const Header& header, const std::
 		if (header.payloadSize != 1) {
 			return ErrorCode::InvalidLength;
 		}
-		if (header.sequence == 0 || (bytes[HEADER_SIZE] & 0xe0) != 0) {
+		if (header.sequence == 0 || bytes[HEADER_SIZE] > MAX_BUTTON_STATE) {
 			return ErrorCode::InvalidField;
 		}
 	}

@@ -16,8 +16,8 @@
 #include <vector>
 
 #include "Session.hpp"
-#include "network/Protocol.hpp"
 #include "network/UdpServer.hpp"
+#include "utils/network/Protocol.hpp"
 
 namespace rtype {
 

@@ -13,22 +13,29 @@ endif()
 
 find_package(asio CONFIG REQUIRED)
 find_package(Threads REQUIRED)
+find_package(SFML 3.0.2 EXACT COMPONENTS Graphics Window System CONFIG REQUIRED)
+
+add_library(rtype_protocol src/utils/network/Protocol.cpp)
+target_include_directories(rtype_protocol PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
+
+add_library(rtype_logger src/utils/Logger.cpp)
+target_include_directories(rtype_logger PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
 
 add_executable(r-type_server
     src/server/main.cpp
     src/server/GameServer.cpp
     src/server/Session.cpp
-    src/server/network/Protocol.cpp
     src/server/network/UdpServer.cpp
 )
-target_link_libraries(r-type_server PRIVATE asio::asio Threads::Threads)
+target_link_libraries(r-type_server PRIVATE rtype_protocol rtype_logger asio::asio Threads::Threads)
 
-# The graphical client will become a target when its source tree is added.
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/client/main.cpp")
-    find_package(SFML COMPONENTS system window graphics audio network REQUIRED)
-    add_executable(r-type_client src/client/main.cpp)
-    target_link_libraries(r-type_client PRIVATE SFML::graphics SFML::window
-        SFML::system SFML::audio SFML::network asio::asio)
-endif()
-
-
+add_executable(r-type_client
+    src/client/main.cpp
+    src/client/app/ClientApp.cpp
+    src/client/app/ClientOptions.cpp
+    src/client/SFML/Sfml.cpp
+    src/client/network/GameClient.cpp
+    src/client/network/UdpClient.cpp
+)
+target_link_libraries(r-type_client PRIVATE rtype_protocol rtype_logger
+    asio::asio Threads::Threads SFML::Graphics SFML::Window SFML::System)

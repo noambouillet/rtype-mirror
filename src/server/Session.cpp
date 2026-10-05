@@ -9,7 +9,7 @@
 
 #include <utility>
 
-#include "network/Protocol.hpp"
+#include "utils/network/Protocol.hpp"
 
 namespace rtype {
 

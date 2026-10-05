@@ -1,10 +1,11 @@
 # R-Type UDP protocol (session and input phase)
 
 This version implements the network layer for one game with up to four player
-sessions. It handles joins, disconnects, errors, and input commands. The server
-runs fixed network ticks, but does not create entities, simulate gameplay, or
-send world snapshots. An ECS integration will consume the inputs and define the
-world messages later. This is a partial implementation of the Part 1 assignment.
+sessions. The client sends joins, disconnects, and input commands and validates
+the implemented server replies. The server runs fixed network ticks, but does
+not create entities, simulate gameplay, or send world snapshots. An ECS
+integration will consume the inputs and define the world messages later. This
+is a partial implementation of the Part 1 assignment.
 
 ## Transport and encoding
 
@@ -83,8 +84,12 @@ sequence `0` and echo the nonce. A rejection has session ID `0`; reason `1`
 means `SERVER_FULL`. The server also rejects new sessions after exhausting its
 nonzero session IDs.
 
-The client may retry the same request and nonce every 500 ms, up to 10
-attempts. While the session is active, the server repeats its acceptance for
+The current client retries the same request and nonce every 500 ms, up to 10
+attempts, then reports a timeout. It ignores acceptance and rejection packets
+with a different nonce, malformed server packets, and replies from other
+addresses. It reports validated `PLAYER_LEFT` and `ERROR` notices in the log.
+An `INVALID_SESSION` error closes the local session. While the session is
+active, the server repeats its acceptance for
 that nonce without creating another player. Reconnecting after leaving
 requires a new nonce. The session ID alone selects a session; it has no login
 or identity. A repeated join or valid in-session packet updates the session's
@@ -105,8 +110,8 @@ heartbeat.
 
 ## Input commands and timing
 
-The server processes queued datagrams at 60 fixed ticks per second. Clients
-send their full button state on each change and every 50 ms, including when
+The server processes queued datagrams at 60 fixed ticks per second. The current
+client sends its full button state on each change and every 50 ms, including when
 idle. Periodic input refreshes the session and replaces lost commands; it does
 not request a reply. After 250 ms without a newer input, the server exposes
 all buttons as released for that tick. The session itself expires after 5
@@ -133,6 +138,8 @@ other gameplay action is performed in this phase.
 a `connectedMask`. A future ECS system can consume that value on each game
 tick. `GameServer::run()` currently schedules these ticks and discards the
 returned value. No separate input queue or command broadcast is implemented.
+The graphical client currently draws a placeholder sprite; it does not apply
+server world state because the server does not send any yet.
 
 ## Packet validation and errors
 
