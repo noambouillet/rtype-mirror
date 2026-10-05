@@ -14,6 +14,7 @@
 #include <system_error>
 
 #include "GameServer.hpp"
+#include "utils/Logger.hpp"
 
 namespace rtype {
 
@@ -48,14 +49,16 @@ int main(int argc, char** argv)
 	}
 	std::signal(SIGINT, rtype::stopServer);
 	std::signal(SIGTERM, rtype::stopServer);
+	rtype::Logger logger(std::cout);
+	logger.setVerbose(true);
 	try {
 		rtype::GameServer server(port);
-		std::cout << "R-Type server listening on UDP port " << port << '\n';
+		logger.info("R-Type server listening on UDP port " + std::to_string(port));
 		server.run(rtype::running);
 	} catch (const std::exception& error) {
-		std::cerr << "Server error: " << error.what() << '\n';
+		logger.error(std::string("Server error: ") + error.what());
 		return 1;
 	}
-	std::cout << "\nGoodbye..." << '\n';
+	logger.info("Goodbye...");
 	return 0;
 }

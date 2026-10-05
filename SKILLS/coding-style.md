@@ -22,3 +22,5 @@ These rules supplement `docs/coding-style.md`.
 - Keep a function signature or other expression on one line when it fits the
   formatter's line limit.
 - For a function with an unused parameter, dont cast it to void. Instead, use the attribute `[[maybe_unused]]`.
+- Throw a project error class for an application failure. Do not throw
+  `std::runtime_error`, `std::invalid_argument`, or a library exception directly.

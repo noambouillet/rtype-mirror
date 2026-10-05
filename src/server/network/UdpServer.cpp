@@ -10,7 +10,7 @@
 #include <algorithm>
 #include <utility>
 
-#include "Protocol.hpp"
+#include "utils/network/Protocol.hpp"
 
 namespace rtype::network {
 

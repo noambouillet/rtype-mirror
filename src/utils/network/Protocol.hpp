@@ -20,6 +20,7 @@ static constexpr std::size_t MAX_DATAGRAM_SIZE = 1200;
 static constexpr std::array<std::uint8_t, 4> MAGIC{'R', 'T', 'Y', 'P'};
 static constexpr std::uint8_t VERSION = 1;
 static constexpr std::uint32_t HALF_SEQUENCE = 2147483648;
+static constexpr std::uint8_t MAX_BUTTON_STATE = 0b00011111;
 
 enum class PacketType : std::uint8_t {
 	JoinRequest = 0x01,
@@ -55,6 +56,7 @@ struct ParsedHeader {
 };
 
 ParsedHeader parseClientHeader(const std::vector<std::uint8_t>& bytes);
+std::optional<Header> parseServerHeader(const std::vector<std::uint8_t>& bytes);
 std::optional<ErrorCode> validateClientPayload(const Header& header, const std::vector<std::uint8_t>& bytes);
 std::vector<std::uint8_t> makePacket(PacketType type, std::uint32_t sequence,
 	std::uint32_t sessionId, const std::vector<std::uint8_t>& payload);

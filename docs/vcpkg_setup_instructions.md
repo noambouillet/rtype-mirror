@@ -1,6 +1,6 @@
 ## Dependency Management with Vcpkg
 
-This project uses [Vcpkg](https://vcpkg.io/) in **Manifest Mode** to manage C++ dependencies (SFML, Asio, GTest). 
+This project uses [Vcpkg](https://vcpkg.io/) in **Manifest Mode** to manage C++ dependencies (SFML and Asio).
 We chose Vcpkg because it offers excellent native compatibility with both Windows (MSVC) and Linux, integrates seamlessly with CMake via a *toolchain* file, and features a robust binary caching system which is essential for preserving our Continuous Integration (CI) build quotas.
 
 ### Prerequisites
@@ -45,7 +45,9 @@ Once the CMake generation is complete, start the compilation:
 ```bash
 cmake --build build
 ```
-The server executable is `build/r-type_server` on Linux and `build/Debug/r-type_server.exe` with the default Visual Studio generator on Windows. The client target will be available when its source tree is added. To install its SFML dependency, configure with `-DVCPKG_MANIFEST_FEATURES=client`.
+The build creates both `r-type_server` and `r-type_client`. On Linux, they are `build/r-type_server` and `build/r-type_client`; with the default Visual Studio generator on Windows, they are under `build/Debug/`. The client uses SFML 3.0.2, installed by vcpkg during configuration.
+
+If reusing a build directory configured with the former optional client feature, remove its cached switches once with `cmake -S . -B build -U VCPKG_MANIFEST_FEATURES -U RTYPE_BUILD_CLIENT` before rebuilding.
 
 **5. Run and verify the server**
 
@@ -57,7 +59,9 @@ The server listens on UDP port 6767 by default. Pass a different port as its onl
 
 On Windows, run `build\Debug\r-type_server.exe 6767` (or use the output path for your chosen CMake generator). Stop it with Ctrl+C. The server has no graphical interface. It currently accepts joins, disconnects, and input commands, and sends protocol errors and departure notices. Its fixed tick does not run gameplay or send snapshots; that requires the planned ECS integration. Clients use the binary protocol in [RFC.md](RFC.md).
 
-The UDP smoke test requires Python 3 and local UDP socket access:
+Run the graphical client from the repository root against a local server with `./build/r-type_client`. It loads the placeholder sprite from `assets/sprite.png` relative to the working directory. It connects to `localhost:6767` by default. Pass `[host] [port]` or just a port to override these values; `-h` prints help. Arrow keys change the input state and Space sends Fire; a connected joystick also supplies movement and Fire. The visible sprite is a placeholder until the server sends world state. Use `--log-file=client.log` to append this process's logs to a file instead of stdout. Ctrl+C or closing the window sends `DISCONNECT`.
+
+The server and client UDP smoke tests require Python 3 and local UDP socket access. They use a small network-only client probe, so a display is not required:
 
 ```bash
 ctest --test-dir build --output-on-failure

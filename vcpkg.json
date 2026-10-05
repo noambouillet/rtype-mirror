@@ -1,16 +1,6 @@
 {
   "name": "r-type",
   "version-string": "1.0.0",
-  "dependencies": ["asio"],
-  "features": {
-    "client": {
-      "description": "Graphical client dependencies",
-      "dependencies": ["sfml"]
-    },
-    "tests": {
-      "description": "GoogleTest for future test targets",
-      "dependencies": ["gtest"]
-    }
-  },
+  "dependencies": ["asio", {"name": "sfml", "default-features": false, "features": ["graphics"]}],
   "builtin-baseline": "07f4812200df3d3c931c0c8a6081d3b21fe2bf9f"
 }
