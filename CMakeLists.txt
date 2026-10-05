@@ -31,6 +31,8 @@ target_link_libraries(r-type_server PRIVATE rtype_protocol rtype_logger asio::as
 
 add_executable(r-type_client
     src/client/main.cpp
+    src/client/app/ClientApp.cpp
+    src/client/app/ClientOptions.cpp
     src/client/SFML/Sfml.cpp
     src/client/network/GameClient.cpp
     src/client/network/UdpClient.cpp
