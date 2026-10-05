@@ -15,7 +15,7 @@
 namespace rtype {
 
 /// Opens the window and loads the current placeholder player sprite.
-Sfml::Sfml() : _window(sf::VideoMode({1280, 720}), "R-Type"), _playerSprite(_playerTexture), _joystickId(0), _lastFrame(std::chrono::steady_clock::now())
+Sfml::Sfml() : _window(sf::VideoMode({WINDOW_WIDTH, WINDOW_HEIGHT}), "R-Type"), _playerSprite(_playerTexture), _joystickId(0), _lastFrame(std::chrono::steady_clock::now())
 {
 	_window.setFramerateLimit(60);
 	if (!_playerTexture.loadFromFile("assets/freaky-apple.jpg")) {

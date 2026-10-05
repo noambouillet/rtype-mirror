@@ -23,6 +23,8 @@ private:
 	static constexpr std::uint8_t BUTTON_LEFT = 0x04;
 	static constexpr std::uint8_t BUTTON_RIGHT = 0x08;
 	static constexpr std::uint8_t BUTTON_FIRE = 0x10;
+	static constexpr std::uint32_t WINDOW_WIDTH = 1280;
+	static constexpr std::uint32_t WINDOW_HEIGHT = 720;
 
 	std::uint8_t keyboardButtons() const;
 	std::uint8_t joystickButtons() const;
