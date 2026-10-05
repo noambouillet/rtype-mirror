@@ -11,9 +11,7 @@
 
 namespace rtype::network {
 
-namespace detail {
-
-bool isKnownType(std::uint8_t type)
+static bool isKnownType(std::uint8_t type)
 {
 	switch (static_cast<PacketType>(type)) {
 		case PacketType::JoinRequest:
@@ -26,8 +24,6 @@ bool isKnownType(std::uint8_t type)
 			return true;
 	}
 	return false;
-}
-
 }
 
 /// Appends a 16-bit integer in network byte order.
@@ -88,7 +84,7 @@ ParsedHeader parseClientHeader(const std::vector<std::uint8_t>& bytes)
 		result.error = ErrorCode::UnsupportedVersion;
 	} else if (bytes.size() > MAX_DATAGRAM_SIZE || bytes.size() != HEADER_SIZE + (static_cast<std::uint16_t>(bytes[6]) << 8 | bytes[7])) {
 		result.error = ErrorCode::InvalidLength;
-	} else if (!detail::isKnownType(bytes[5])) {
+	} else if (!isKnownType(bytes[5])) {
 		result.error = ErrorCode::UnknownType;
 	} else if (bytes[5] != static_cast<std::uint8_t>(PacketType::JoinRequest) &&
 			   bytes[5] != static_cast<std::uint8_t>(PacketType::Disconnect) &&
@@ -107,10 +103,8 @@ ParsedHeader parseClientHeader(const std::vector<std::uint8_t>& bytes)
 	return result;
 }
 
-namespace detail {
-
 /// Checks the implemented join response fields.
-bool validJoinReply(const Header& header, const std::vector<std::uint8_t>& bytes)
+static bool validJoinReply(const Header& header, const std::vector<std::uint8_t>& bytes)
 {
 	if (header.payloadSize != 9 || header.sequence != 0) {
 		return false;
@@ -122,14 +116,14 @@ bool validJoinReply(const Header& header, const std::vector<std::uint8_t>& bytes
 }
 
 /// Checks the implemented session notice fields.
-bool validSessionNotice(const Header& header, const std::vector<std::uint8_t>& bytes)
+static bool validSessionNotice(const Header& header, const std::vector<std::uint8_t>& bytes)
 {
 	return header.payloadSize == 10 && header.sequence != 0 && header.sessionId != 0 &&
 		   bytes[HEADER_SIZE + 8] <= 3 && (bytes[HEADER_SIZE + 9] == 1 || bytes[HEADER_SIZE + 9] == 2);
 }
 
 /// Checks the implemented protocol error fields.
-bool validErrorNotice(const Header& header, const std::vector<std::uint8_t>& bytes)
+static bool validErrorNotice(const Header& header, const std::vector<std::uint8_t>& bytes)
 {
 	return header.payloadSize == 7 && header.sequence == 0 && header.sessionId == 0 &&
 		   bytes[HEADER_SIZE] >= 1 && bytes[HEADER_SIZE] <= 6 &&
@@ -137,7 +131,7 @@ bool validErrorNotice(const Header& header, const std::vector<std::uint8_t>& byt
 }
 
 /// Validates the fields specific to implemented server packet types.
-bool validServerPayload(const Header& header, const std::vector<std::uint8_t>& bytes)
+static bool validServerPayload(const Header& header, const std::vector<std::uint8_t>& bytes)
 {
 	switch (header.type) {
 		case PacketType::JoinAccepted:
@@ -150,8 +144,6 @@ bool validServerPayload(const Header& header, const std::vector<std::uint8_t>& b
 		default:
 			return false;
 	}
-}
-
 }
 
 /// Validates the common header and the implemented server-to-client packets.
@@ -170,7 +162,7 @@ std::optional<Header> parseServerHeader(const std::vector<std::uint8_t>& bytes)
 	header.payloadSize = payloadSize;
 	header.sequence = readU32(bytes, 8);
 	header.sessionId = readU32(bytes, 12);
-	if (!detail::validServerPayload(header, bytes)) {
+	if (!validServerPayload(header, bytes)) {
 		return std::nullopt;
 	}
 	return header;
