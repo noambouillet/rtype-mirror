@@ -8,6 +8,7 @@
 #include "ClientApp.hpp"
 
 #include <csignal>
+#include <cstdint>
 #include <filesystem>
 #include <iostream>
 #include <memory>
@@ -74,7 +75,9 @@ static bool updateFrame(Sfml& window, network::GameClient& client, Logger& logge
 	if (!window.isOpen()) {
 		return true;
 	}
-	client.tick(window.buttons());
+	const std::uint8_t buttons = window.buttons();
+	client.tick(buttons);
+	window.movePlayer(buttons);
 	reportNotices(client, logger);
 	if (client.status() != previous) {
 		previous = client.status();

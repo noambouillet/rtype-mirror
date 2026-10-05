@@ -8,6 +8,7 @@
 #pragma once
 
 #include <SFML/Graphics.hpp>
+#include <chrono>
 #include <cstdint>
 
 namespace rtype {
@@ -15,6 +16,8 @@ namespace rtype {
 class Sfml {
 private:
 	static constexpr float JOYSTICK_THRESHOLD = 50;
+	static constexpr float PLAYER_SPEED = 250;
+	static constexpr float MAX_FRAME_SECONDS = 0.1;
 	static constexpr std::uint8_t BUTTON_UP = 0x01;
 	static constexpr std::uint8_t BUTTON_DOWN = 0x02;
 	static constexpr std::uint8_t BUTTON_LEFT = 0x04;
@@ -28,12 +31,14 @@ private:
 	sf::Texture _playerTexture;
 	sf::Sprite _playerSprite;
 	unsigned int _joystickId;
+	std::chrono::steady_clock::time_point _lastFrame;
 
 public:
 	Sfml();
 	bool isOpen() const;
 	void handleEvent();
 	std::uint8_t buttons() const;
+	void movePlayer(std::uint8_t buttons);
 	void displayWindow();
 };
 

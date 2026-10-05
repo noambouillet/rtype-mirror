@@ -7,18 +7,22 @@
 
 #include "Sfml.hpp"
 
+#include <algorithm>
+#include <cmath>
+
 #include "utils/RTypeError.hpp"
 
 namespace rtype {
 
 /// Opens the window and loads the current placeholder player sprite.
-Sfml::Sfml() : _window(sf::VideoMode({1280, 720}), "R-Type"), _playerSprite(_playerTexture), _joystickId(0)
+Sfml::Sfml() : _window(sf::VideoMode({1280, 720}), "R-Type"), _playerSprite(_playerTexture), _joystickId(0), _lastFrame(std::chrono::steady_clock::now())
 {
 	_window.setFramerateLimit(60);
-	if (!_playerTexture.loadFromFile("assets/sprite.png")) {
-		throw GraphicsError("Cannot load assets/sprite.png");
+	if (!_playerTexture.loadFromFile("assets/freaky-apple.jpg")) {
+		throw GraphicsError("Cannot load assets/freaky-apple.jpg");
 	}
-	_playerSprite.setScale({0.2, 0.2});
+	_playerSprite.setTexture(_playerTexture, true);
+	_playerSprite.setScale({0.5, 0.5});
 	_playerSprite.setPosition({100.0, 200.0});
 }
 
@@ -100,7 +104,29 @@ std::uint8_t Sfml::joystickButtons() const
 	return value;
 }
 
-/// Draws the placeholder sprite while world snapshots are unimplemented.
+/// Moves the temporary sprite locally while server world state is unavailable.
+void Sfml::movePlayer(std::uint8_t buttons)
+{
+	const auto now = std::chrono::steady_clock::now();
+	const float elapsed = std::min(std::chrono::duration<float>(now - _lastFrame).count(), MAX_FRAME_SECONDS);
+	_lastFrame = now;
+	const float horizontal = static_cast<float>((buttons & BUTTON_RIGHT) != 0) - static_cast<float>((buttons & BUTTON_LEFT) != 0);
+	const float vertical = static_cast<float>((buttons & BUTTON_DOWN) != 0) - static_cast<float>((buttons & BUTTON_UP) != 0);
+	const float length = std::sqrt(horizontal * horizontal + vertical * vertical);
+	if (length == 0) {
+		return;
+	}
+	auto position = _playerSprite.getPosition();
+	const float distance = PLAYER_SPEED * elapsed / length;
+	position.x += horizontal * distance;
+	position.y += vertical * distance;
+	const auto bounds = _playerSprite.getGlobalBounds();
+	position.x = std::clamp(position.x, 0.0f, std::max(0.0f, static_cast<float>(_window.getSize().x) - bounds.size.x));
+	position.y = std::clamp(position.y, 0.0f, std::max(0.0f, static_cast<float>(_window.getSize().y) - bounds.size.y));
+	_playerSprite.setPosition(position);
+}
+
+/// Draws the temporary sprite while world snapshots are unimplemented.
 void Sfml::displayWindow()
 {
 	_window.clear(sf::Color::Black);
