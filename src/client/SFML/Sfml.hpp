@@ -1,0 +1,40 @@
+/*
+** EPITECH PROJECT, 2026
+** R-Type
+** File description:
+** Sfml
+*/
+
+#pragma once
+
+#include <SFML/Graphics.hpp>
+#include <cstdint>
+
+namespace rtype {
+
+class Sfml {
+private:
+	static constexpr float JOYSTICK_THRESHOLD = 50;
+	static constexpr std::uint8_t BUTTON_UP = 0x01;
+	static constexpr std::uint8_t BUTTON_DOWN = 0x02;
+	static constexpr std::uint8_t BUTTON_LEFT = 0x04;
+	static constexpr std::uint8_t BUTTON_RIGHT = 0x08;
+	static constexpr std::uint8_t BUTTON_FIRE = 0x10;
+
+	std::uint8_t keyboardButtons() const;
+	std::uint8_t joystickButtons() const;
+
+	sf::RenderWindow _window;
+	sf::Texture _playerTexture;
+	sf::Sprite _playerSprite;
+	unsigned int _joystickId;
+
+public:
+	Sfml();
+	bool isOpen() const;
+	void handleEvent();
+	std::uint8_t buttons() const;
+	void displayWindow();
+};
+
+}
