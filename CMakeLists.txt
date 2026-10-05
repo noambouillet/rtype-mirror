@@ -21,13 +21,22 @@ target_include_directories(rtype_protocol PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src
 add_library(rtype_logger src/utils/Logger.cpp)
 target_include_directories(rtype_logger PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
 
+add_library(rtype_engine 
+    src/ECS/Component/ComponentManager.cpp
+    src/ECS/Coordinator/Coordinator.cpp
+    src/ECS/Entity/Entity.cpp
+    src/ECS/Entity/EntityManager.cpp
+    src/ECS/System/SystemManager.cpp
+)
+target_include_directories(rtype_engine PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
+
 add_executable(r-type_server
     src/server/main.cpp
     src/server/GameServer.cpp
     src/server/Session.cpp
     src/server/network/UdpServer.cpp
 )
-target_link_libraries(r-type_server PRIVATE rtype_protocol rtype_logger asio::asio Threads::Threads)
+target_link_libraries(r-type_server PRIVATE rtype_protocol rtype_logger rtype_engine asio::asio Threads::Threads)
 
 add_executable(r-type_client
     src/client/main.cpp
