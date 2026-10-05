@@ -8,6 +8,7 @@
 #include "Protocol.hpp"
 
 #include <algorithm>
+#include <array>
 
 namespace rtype::network {
 
@@ -20,6 +21,7 @@ static bool isKnownType(std::uint8_t type)
 		case PacketType::Disconnect:
 		case PacketType::PlayerLeft:
 		case PacketType::PlayerInput:
+		case PacketType::WorldSnapshot:
 		case PacketType::Error:
 			return true;
 	}
@@ -122,6 +124,34 @@ static bool validSessionNotice(const Header& header, const std::vector<std::uint
 		   bytes[HEADER_SIZE + 8] <= 3 && (bytes[HEADER_SIZE + 9] == 1 || bytes[HEADER_SIZE + 9] == 2);
 }
 
+/// Checks the masks, record count, and unique IDs in a world snapshot.
+static bool validWorldSnapshot(const Header& header, const std::vector<std::uint8_t>& bytes)
+{
+	if (header.sequence == 0 || header.sessionId == 0 || header.payloadSize < 11) {
+		return false;
+	}
+	const std::uint8_t connectedMask = bytes[HEADER_SIZE + 8];
+	const std::uint8_t aliveMask = bytes[HEADER_SIZE + 9];
+	const std::size_t entityCount = bytes[HEADER_SIZE + 10];
+	if ((connectedMask & 0xF0) != 0 || (aliveMask & 0xF0) != 0 || (aliveMask & connectedMask) != aliveMask ||
+		entityCount > 64 || header.payloadSize != 11 + entityCount * 16) {
+		return false;
+	}
+
+	std::array<std::uint32_t, 64> entityIds{};
+	for (std::size_t index = 0; index < entityCount; index++) {
+		const std::size_t recordOffset = HEADER_SIZE + 11 + index * 16;
+		const std::uint32_t entityId = readU32(bytes, recordOffset);
+		for (std::size_t previous = 0; previous < index; previous++) {
+			if (entityIds[previous] == entityId) {
+				return false;
+			}
+		}
+		entityIds[index] = entityId;
+	}
+	return true;
+}
+
 /// Checks the implemented protocol error fields.
 static bool validErrorNotice(const Header& header, const std::vector<std::uint8_t>& bytes)
 {
@@ -139,6 +169,8 @@ static bool validServerPayload(const Header& header, const std::vector<std::uint
 			return validJoinReply(header, bytes);
 		case PacketType::PlayerLeft:
 			return validSessionNotice(header, bytes);
+		case PacketType::WorldSnapshot:
+			return validWorldSnapshot(header, bytes);
 		case PacketType::Error:
 			return validErrorNotice(header, bytes);
 		default:

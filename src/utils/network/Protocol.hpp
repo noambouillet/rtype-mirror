@@ -29,6 +29,7 @@ enum class PacketType : std::uint8_t {
 	Disconnect = 0x04,
 	PlayerLeft = 0x05,
 	PlayerInput = 0x10,
+	WorldSnapshot = 0x20,
 	Error = 0x67,
 };
 
