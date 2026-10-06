@@ -29,17 +29,13 @@ Signature RenderSystem::signature(Coordinator& coordinator)
 void RenderSystem::draw(Coordinator& coordinator, sf::RenderWindow& window, const TextureMap& textures)
 {
 	window.setView(_worldView);
-	for (const Entity& e : entities) {
-		if (!coordinator.getComponent<Sprite>(e).isUI) {
+	for (const Entity& e : entities)
+		if (!coordinator.getComponent<Sprite>(e).isUI)
 			drawEntity(coordinator, window, e, textures);
-		}
-	}
 	window.setView(_uiView);
-	for (const Entity& e : entities) {
-		if (coordinator.getComponent<Sprite>(e).isUI) {
+	for (const Entity& e : entities)
+		if (coordinator.getComponent<Sprite>(e).isUI)
 			drawEntity(coordinator, window, e, textures);
-		}
-	}
 }
 
 /// Draws one entity centered on its position.
@@ -49,9 +45,8 @@ void RenderSystem::drawEntity(Coordinator& coordinator, sf::RenderWindow& window
 	const auto& spr = coordinator.getComponent<Sprite>(e);
 	const auto texture = textures.find(spr.textureName);
 
-	if (texture == textures.end()) {
+	if (texture == textures.end())
 		return;
-	}
 	sf::Sprite sprite(texture->second);
 	const sf::Vector2f size(texture->second.getSize());
 

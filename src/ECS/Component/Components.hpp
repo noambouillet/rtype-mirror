@@ -37,6 +37,8 @@ struct Sprite {
     bool isUI = false;
 };
 
+struct Destroy {};
+
 struct Collider {
     float width = 0.0f;
     float height = 0.0f;
