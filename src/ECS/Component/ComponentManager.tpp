@@ -48,6 +48,13 @@ void ComponentManager::remove(Entity e)
     getArray<T>()->remove(e);
 }
 
+///Check whether the given entity owns a component of type T.
+template<typename T>
+bool ComponentManager::has(Entity e)
+{
+    return getArray<T>()->has(e);
+}
+
 ///Get a reference to the component of type T of the given entity.
 template<typename T>
 T& ComponentManager::get(Entity e)
