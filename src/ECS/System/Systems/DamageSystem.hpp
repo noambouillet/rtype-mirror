@@ -7,6 +7,9 @@
 
 #pragma once
 
+#include <vector>
+
+#include "CollisionSystem.hpp"
 #include "Components.hpp"
 #include "Coordinator.hpp"
 #include "System.hpp"
@@ -14,9 +17,12 @@
 namespace rtype::ecs {
 
 class DamageSystem : public System {
- public:
-  static Signature signature(Coordinator& coordinator);
-  void update(Coordinator& coordinator);
+public:
+	static Signature signature(Coordinator& coordinator);
+	void update(Coordinator& coordinator, const std::vector<CollisionPair>& collisions);
+
+private:
+	void applyDamage(Coordinator& coordinator, Entity attacker, Entity target);
 };
 
-}  // namespace rtype::ecs
+}
