@@ -28,7 +28,14 @@ add_library(rtype_engine
     src/ECS/Entity/EntityManager.cpp
     src/ECS/System/SystemManager.cpp
 )
-target_include_directories(rtype_engine PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
+target_include_directories(rtype_engine PUBLIC 
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/ECS
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/ECS/Component
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/ECS/Coordinator
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/ECS/Entity
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/ECS/System
+)
 
 add_executable(r-type_server
     src/server/main.cpp
