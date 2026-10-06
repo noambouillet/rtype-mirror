@@ -85,7 +85,7 @@ static bool updateFrame(Sfml& window, network::GameClient& client, Logger& logge
 			return false;
 		}
 	}
-	window.displayWindow();
+	window.displayWindow(client.worldSnapshot());
 	return true;
 }
 

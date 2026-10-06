@@ -12,6 +12,9 @@
 #include <cstdint>
 
 namespace rtype {
+namespace network {
+struct WorldSnapshot;
+}
 
 class Sfml {
 private:
@@ -41,7 +44,7 @@ public:
 	void handleEvent();
 	std::uint8_t buttons() const;
 	void movePlayer(std::uint8_t buttons);
-	void displayWindow();
+	void displayWindow(const std::optional<network::WorldSnapshot>& snapshot);
 };
 
 }

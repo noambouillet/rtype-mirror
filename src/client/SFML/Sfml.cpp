@@ -10,6 +10,7 @@
 #include <algorithm>
 #include <cmath>
 
+#include "client/network/GameClient.hpp"
 #include "utils/RTypeError.hpp"
 
 namespace rtype {
@@ -126,11 +127,16 @@ void Sfml::movePlayer(std::uint8_t buttons)
 	_playerSprite.setPosition(position);
 }
 
-/// Draws the temporary sprite while world snapshots are unimplemented.
-void Sfml::displayWindow()
+/// Draws every entities from the snapshot, or a black screen if not yet connected
+void Sfml::displayWindow(const std::optional<network::WorldSnapshot>& snapshot)
 {
 	_window.clear(sf::Color::Black);
-	_window.draw(_playerSprite);
+	if (snapshot) {
+		for (const auto& entity : snapshot->entities) {
+			_playerSprite.setPosition({entity.x, entity.y});
+			_window.draw(_playerSprite);
+		}
+	}
 	_window.display();
 }
 
