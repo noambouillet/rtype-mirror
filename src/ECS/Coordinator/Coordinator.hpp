@@ -29,6 +29,8 @@ public:
 	template <typename T>
 	void removeComponent(Entity e);
 	template <typename T>
+	bool hasComponent(Entity e);
+	template <typename T>
 	T& getComponent(Entity e);
 	template <typename T>
 	ComponentType getComponentType();
