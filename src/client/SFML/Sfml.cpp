@@ -9,24 +9,22 @@
 
 #include "client/network/GameClient.hpp"
 #include "utils/RTypeError.hpp"
+#include <algorithm>
+#include <cmath>
+#include <optional>
+
+#include "SpriteRegions.hpp"
 
 namespace rtype {
 
-/// Opens the window and loads the current placeholder player sprite.
-Sfml::Sfml() : _window(sf::VideoMode({WINDOW_WIDTH, WINDOW_HEIGHT}), "R-Type"), _joystickId(0), _lastFrame(std::chrono::steady_clock::now())
+/// Opens the window and prepares the game using the AssetManager
+Sfml::Sfml(AssetManager& assets) : 
+    _window(sf::VideoMode({WINDOW_WIDTH, WINDOW_HEIGHT}), "R-Type"), 
+    _joystickId(0), 
+    _lastFrame(std::chrono::steady_clock::now()),
+    _assets(assets)
 {
-	_window.setFramerateLimit(60);
-	std::string assetPaths[4] = {
-		"assets/freaky-apple.jpg",
-		"assets/kirk.jpg",
-		"assets/hannah.jpg",
-		"assets/scuba.jpg"};
-
-	for (int i = 0; i < 4; i++) {
-		if (!_playerTextures[i].loadFromFile(assetPaths[i])) {
-			throw GraphicsError("Cannot load " + assetPaths[i]);
-		}
-	}
+    _window.setFramerateLimit(60);
 }
 
 bool Sfml::isOpen() const

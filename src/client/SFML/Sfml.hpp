@@ -14,6 +14,8 @@
 #include <cmath>
 #include <cstdint>
 
+#include "AssetManager.hpp"
+
 namespace rtype {
 namespace network {
 struct WorldSnapshot;
@@ -36,12 +38,12 @@ private:
 	std::uint8_t joystickButtons() const;
 
 	sf::RenderWindow _window;
-	std::array<sf::Texture, 4> _playerTextures;
+  AssetManager& _assets;
 	unsigned int _joystickId;
 	std::chrono::steady_clock::time_point _lastFrame;
 
 public:
-	Sfml();
+	explicit Sfml(AssetManager& assets);
 	bool isOpen() const;
 	void handleEvent();
 	std::uint8_t buttons() const;
