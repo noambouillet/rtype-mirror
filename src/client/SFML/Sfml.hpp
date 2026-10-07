@@ -11,7 +11,12 @@
 #include <chrono>
 #include <cstdint>
 
+#include "AssetManager.hpp"
+
 namespace rtype {
+namespace network {
+struct WorldSnapshot;
+}
 
 class Sfml {
 private:
@@ -30,18 +35,16 @@ private:
 	std::uint8_t joystickButtons() const;
 
 	sf::RenderWindow _window;
-	sf::Texture _playerTexture;
-	sf::Sprite _playerSprite;
+	AssetManager& _assets;
 	unsigned int _joystickId;
 	std::chrono::steady_clock::time_point _lastFrame;
 
 public:
-	Sfml();
+	explicit Sfml(AssetManager& assets);
 	bool isOpen() const;
 	void handleEvent();
 	std::uint8_t buttons() const;
-	void movePlayer(std::uint8_t buttons);
-	void displayWindow();
+	void displayWindow(const std::optional<network::WorldSnapshot>& snapshot);
 };
 
 }

@@ -8,6 +8,7 @@
 #include "GameClient.hpp"
 
 #include <random>
+#include <utility>
 
 #include "utils/RTypeError.hpp"
 #include "utils/network/Protocol.hpp"
@@ -24,7 +25,7 @@ static std::uint64_t generateNonce()
 
 /// Creates a client with a fresh nonce for this join attempt.
 GameClient::GameClient(const std::string& host, std::uint16_t port)
-	: _udp(host, port), _nonce(generateNonce()), _sessionId(0), _nextSequence(1), _playerId(0), _lastButtons(0), _joinAttempts(0), _status(ClientStatus::Joining)
+	: _udp(host, port), _nonce(generateNonce()), _sessionId(0), _nextSequence(1), _playerId(0), _lastButtons(0), _joinAttempts(0), _status(ClientStatus::Joining), _worldSnapshot{}
 {
 }
 
@@ -90,6 +91,12 @@ std::uint32_t GameClient::sessionId() const
 	return _sessionId;
 }
 
+/// Returns the latest accepted world snapshot for rendering.
+const std::optional<WorldSnapshot>& GameClient::worldSnapshot() const
+{
+	return _worldSnapshot;
+}
+
 /// Accepts only valid replies for this join nonce or active session.
 void GameClient::handlePacket(const std::vector<std::uint8_t>& bytes)
 {
@@ -122,7 +129,7 @@ void GameClient::handleJoinPacket(const Header& header, const std::vector<std::u
 /// Records validated server notices for the active session.
 void GameClient::handleSessionPacket(const Header& header, const std::vector<std::uint8_t>& bytes)
 {
-	if (header.type == PacketType::PlayerLeft && header.sessionId == _sessionId) {
+	if (header.type == PacketType::PlayerLeft) {
 		PlayerDeparture departure;
 		departure.playerId = bytes[HEADER_SIZE + 8];
 		departure.reason = bytes[HEADER_SIZE + 9];
@@ -132,7 +139,75 @@ void GameClient::handleSessionPacket(const Header& header, const std::vector<std
 		if (*_error == ErrorCode::InvalidSession) {
 			_status = ClientStatus::Disconnected;
 		}
+	} else if (header.type == PacketType::WorldSnapshot) {
+		handleSnapshot(bytes);
 	}
+}
+
+/// Decodes a signed 1/16-pixel network coordinate into logical pixels.
+float GameClient::decodePosition(const std::vector<std::uint8_t>& bytes, std::size_t offset)
+{
+	const std::int32_t fixedPosition = static_cast<std::int32_t>(readU32(bytes, offset));
+	return static_cast<float>(fixedPosition) / 16.0f;
+}
+
+/// Parses the entity records after verifying the exact snapshot packet size.
+std::optional<std::vector<WorldEntity>> GameClient::parseEntities(const std::vector<std::uint8_t>& bytes,
+	std::uint8_t entityCount)
+{
+	if (entityCount > MAX_SNAPSHOT_ENTITIES ||
+		bytes.size() != HEADER_SIZE + SNAPSHOT_HEADER_SIZE + entityCount * ENTITY_RECORD_SIZE) {
+		return std::nullopt;
+	}
+
+	std::vector<WorldEntity> entities;
+	entities.reserve(entityCount);
+	for (std::size_t index = 0; index < entityCount; index++) {
+		const std::size_t recordOffset = HEADER_SIZE + SNAPSHOT_HEADER_SIZE + index * ENTITY_RECORD_SIZE;
+		const std::uint8_t rawType = bytes[recordOffset + 4];
+		const std::uint8_t ownerPlayerId = bytes[recordOffset + 5];
+		const std::uint8_t spriteId = bytes[recordOffset + 6];
+		const EntityType entityType = static_cast<EntityType>(rawType);
+
+		if (entityType < EntityType::Player || entityType > EntityType::Bonus ||
+			((entityType == EntityType::Player || entityType == EntityType::Laser) ? ownerPlayerId > 3 : ownerPlayerId != 255) ||
+			(entityType == EntityType::Player && spriteId != ownerPlayerId)) {
+			return std::nullopt;
+		}
+		entities.push_back({
+			.entityId = readU32(bytes, recordOffset),
+			.entityType = static_cast<EntityType>(entityType),
+			.ownerPlayerId = ownerPlayerId,
+			.spriteId = spriteId,
+			.health = bytes[recordOffset + 7],
+			.x = decodePosition(bytes, recordOffset + 8),
+			.y = decodePosition(bytes, recordOffset + 12),
+		});
+	}
+	return entities;
+}
+
+/// Replaces the cached world only with a complete, newer snapshot from the connected server.
+void GameClient::handleSnapshot(const std::vector<std::uint8_t>& bytes)
+{
+	if (bytes.size() < HEADER_SIZE + SNAPSHOT_HEADER_SIZE) {
+		return;
+	}
+	const std::uint64_t tick = readU64(bytes, HEADER_SIZE);
+	if (_worldSnapshot && tick <= _worldSnapshot->tick) {
+		return;
+	}
+	const std::uint8_t entityCount = bytes[HEADER_SIZE + 10];
+	auto entities = parseEntities(bytes, entityCount);
+	if (!entities) {
+		return;
+	}
+	_worldSnapshot = WorldSnapshot{
+		.tick = tick,
+		.connectedMask = bytes[HEADER_SIZE + 8],
+		.aliveMask = bytes[HEADER_SIZE + 9],
+		.entities = std::move(*entities),
+	};
 }
 
 /// Retries the same request and nonce without creating duplicate sessions.

@@ -15,6 +15,7 @@
 #include <string>
 
 #include "client/SFML/Sfml.hpp"
+#include "client/SFML/SpriteRegions.hpp"
 #include "client/network/GameClient.hpp"
 #include "utils/Logger.hpp"
 
@@ -77,7 +78,6 @@ static bool updateFrame(Sfml& window, network::GameClient& client, Logger& logge
 	}
 	const std::uint8_t buttons = window.buttons();
 	client.tick(buttons);
-	window.movePlayer(buttons);
 	reportNotices(client, logger);
 	if (client.status() != previous) {
 		previous = client.status();
@@ -85,7 +85,7 @@ static bool updateFrame(Sfml& window, network::GameClient& client, Logger& logge
 			return false;
 		}
 	}
-	window.displayWindow();
+	window.displayWindow(client.worldSnapshot());
 	return true;
 }
 
@@ -96,8 +96,10 @@ int runClient(const ClientOptions& options)
 	std::signal(SIGTERM, stopClient);
 	auto logger = makeLogger(options.logFile);
 	logger->setVerbose(true);
+	AssetManager assets;
+	assets.preload(sprites::PLAYER_SHEET);
 	network::GameClient client(options.host, options.port);
-	Sfml window;
+	Sfml window(assets);
 	auto previous = client.status();
 	logger->info("Connecting to " + options.host + ':' + std::to_string(options.port));
 	while (running != 0 && window.isOpen()) {
