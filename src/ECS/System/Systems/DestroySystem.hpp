@@ -15,7 +15,7 @@ namespace rtype::ecs {
 
 class DestroySystem : public System {
 public:
-	static Signature signature(Coordinator& coordinator);
+	Signature signature(Coordinator& coordinator);
 	void update(Coordinator& coordinator);
 };
 

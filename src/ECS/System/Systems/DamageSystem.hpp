@@ -18,7 +18,7 @@ namespace rtype::ecs {
 
 class DamageSystem : public System {
 public:
-	static Signature signature(Coordinator& coordinator);
+	Signature signature(Coordinator& coordinator);
 	void update(Coordinator& coordinator, const std::vector<CollisionPair>& collisions);
 
 private:

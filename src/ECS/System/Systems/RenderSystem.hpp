@@ -25,7 +25,7 @@ public:
 	static constexpr float WORLD_HEIGHT = 720.0f;
 
 	RenderSystem();
-	static Signature signature(Coordinator& coordinator);
+	Signature signature(Coordinator& coordinator);
 	void draw(Coordinator& coordinator, sf::RenderWindow& window, const TextureMap& textures);
 	sf::View& getWorldView();
 	const sf::View& getUIView() const;

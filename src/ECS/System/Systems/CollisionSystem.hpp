@@ -22,13 +22,13 @@ struct CollisionPair {
 
 class CollisionSystem : public System {
 public:
-	static Signature signature(Coordinator& coordinator);
+	Signature signature(Coordinator& coordinator);
 	void update(Coordinator& coordinator);
 	[[nodiscard]] const std::vector<CollisionPair>& collisions() const;
 
 private:
-	static bool canCollide(const Collider& a, const Collider& b);
-	static bool overlaps(const Position& posA, const Collider& colA, const Position& posB, const Collider& colB);
+	bool canCollide(const Collider& a, const Collider& b);
+	bool overlaps(const Position& posA, const Collider& colA, const Position& posB, const Collider& colB);
 	std::vector<CollisionPair> _collisions;
 };
 
