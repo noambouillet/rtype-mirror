@@ -7,24 +7,26 @@
 
 #include "Sfml.hpp"
 
-#include <algorithm>
-#include <cmath>
-
 #include "client/network/GameClient.hpp"
 #include "utils/RTypeError.hpp"
 
 namespace rtype {
 
 /// Opens the window and loads the current placeholder player sprite.
-Sfml::Sfml() : _window(sf::VideoMode({WINDOW_WIDTH, WINDOW_HEIGHT}), "R-Type"), _playerSprite(_playerTexture), _joystickId(0), _lastFrame(std::chrono::steady_clock::now())
+Sfml::Sfml() : _window(sf::VideoMode({WINDOW_WIDTH, WINDOW_HEIGHT}), "R-Type"), _joystickId(0), _lastFrame(std::chrono::steady_clock::now())
 {
 	_window.setFramerateLimit(60);
-	if (!_playerTexture.loadFromFile("assets/freaky-apple.jpg")) {
-		throw GraphicsError("Cannot load assets/freaky-apple.jpg");
+	std::string assetPaths[4] = {
+		"assets/freaky-apple.jpg",
+		"assets/kirk.jpg",
+		"assets/hannah.jpg",
+		"assets/scuba.jpg"};
+
+	for (int i = 0; i < 4; i++) {
+		if (!_playerTextures[i].loadFromFile(assetPaths[i])) {
+			throw GraphicsError("Cannot load " + assetPaths[i]);
+		}
 	}
-	_playerSprite.setTexture(_playerTexture, true);
-	_playerSprite.setScale({0.5, 0.5});
-	_playerSprite.setPosition({100.0, 200.0});
 }
 
 bool Sfml::isOpen() const
@@ -105,36 +107,21 @@ std::uint8_t Sfml::joystickButtons() const
 	return value;
 }
 
-/// Moves the temporary sprite locally while server world state is unavailable.
-void Sfml::movePlayer(std::uint8_t buttons)
-{
-	const auto now = std::chrono::steady_clock::now();
-	const float elapsed = std::min(std::chrono::duration<float>(now - _lastFrame).count(), MAX_FRAME_SECONDS);
-	_lastFrame = now;
-	const float horizontal = static_cast<float>((buttons & BUTTON_RIGHT) != 0) - static_cast<float>((buttons & BUTTON_LEFT) != 0);
-	const float vertical = static_cast<float>((buttons & BUTTON_DOWN) != 0) - static_cast<float>((buttons & BUTTON_UP) != 0);
-	const float length = std::sqrt(horizontal * horizontal + vertical * vertical);
-	if (length == 0) {
-		return;
-	}
-	auto position = _playerSprite.getPosition();
-	const float distance = PLAYER_SPEED * elapsed / length;
-	position.x += horizontal * distance;
-	position.y += vertical * distance;
-	const auto bounds = _playerSprite.getGlobalBounds();
-	position.x = std::clamp(position.x, 0.0f, std::max(0.0f, static_cast<float>(_window.getSize().x) - bounds.size.x));
-	position.y = std::clamp(position.y, 0.0f, std::max(0.0f, static_cast<float>(_window.getSize().y) - bounds.size.y));
-	_playerSprite.setPosition(position);
-}
-
 /// Draws every entities from the snapshot, or a black screen if not yet connected
 void Sfml::displayWindow(const std::optional<network::WorldSnapshot>& snapshot)
 {
 	_window.clear(sf::Color::Black);
 	if (snapshot) {
 		for (const auto& entity : snapshot->entities) {
-			_playerSprite.setPosition({entity.x, entity.y});
-			_window.draw(_playerSprite);
+			if (entity.entityType == network::EntityType::Player) {
+				std::uint8_t safeSpriteId = entity.spriteId;
+				if (safeSpriteId >= _playerTextures.size())
+					safeSpriteId = 0;
+				sf::Sprite sprite(_playerTextures[safeSpriteId]);
+				sprite.setScale({0.5f, 0.5f});
+				sprite.setPosition({entity.x, entity.y});
+				_window.draw(sprite);
+			}
 		}
 	}
 	_window.display();

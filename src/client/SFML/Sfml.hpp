@@ -8,7 +8,10 @@
 #pragma once
 
 #include <SFML/Graphics.hpp>
+#include <algorithm>
+#include <array>
 #include <chrono>
+#include <cmath>
 #include <cstdint>
 
 namespace rtype {
@@ -33,8 +36,7 @@ private:
 	std::uint8_t joystickButtons() const;
 
 	sf::RenderWindow _window;
-	sf::Texture _playerTexture;
-	sf::Sprite _playerSprite;
+	std::array<sf::Texture, 4> _playerTextures;
 	unsigned int _joystickId;
 	std::chrono::steady_clock::time_point _lastFrame;
 
@@ -43,7 +45,6 @@ public:
 	bool isOpen() const;
 	void handleEvent();
 	std::uint8_t buttons() const;
-	void movePlayer(std::uint8_t buttons);
 	void displayWindow(const std::optional<network::WorldSnapshot>& snapshot);
 };
 
