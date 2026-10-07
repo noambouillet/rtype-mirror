@@ -19,8 +19,6 @@ Signature DamageSystem::signature(Coordinator& coordinator)
 }
 
 /// Applies `Damage` in both directions for every pair in `collisions`.
-///
-/// Damage is applied on every call while two entities keep touching.
 void DamageSystem::update(Coordinator& coordinator, const std::vector<CollisionPair>& collisions)
 {
 	for (const auto& [a, b] : collisions) {
@@ -30,7 +28,6 @@ void DamageSystem::update(Coordinator& coordinator, const std::vector<CollisionP
 }
 
 /// Removes the `attacker`'s Damage from the `target`'s Health.
-/// Does nothing if the target has no Health or the attacker has no Damage.
 /// Marks the target with `Destroy` once its health reaches zero.
 void DamageSystem::applyDamage(Coordinator& coordinator, Entity attacker, Entity target)
 {
