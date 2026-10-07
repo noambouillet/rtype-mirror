@@ -1,11 +1,10 @@
-# R-Type UDP protocol (session and input phase)
+# R-Type UDP protocol
 
 This version implements the network layer for one game with up to four player
 sessions. The client sends joins, disconnects, and input commands and validates
-the implemented server replies. The server runs fixed network ticks, but does
-not create entities, simulate gameplay, or send world snapshots. An ECS
-integration will consume the inputs and define the world messages later. This
-is a partial implementation of the Part 1 assignment.
+server replies. The server runs fixed ticks, moves temporary player entities,
+and sends full world snapshots. Shooting, enemies, collisions, and damage
+remain to be implemented.
 
 ## Transport and encoding
 
@@ -24,7 +23,7 @@ is a partial implementation of the Part 1 assignment.
 | 5 | 1 | `u8` | `type` | One of the packet types below |
 | 6 | 2 | `u16` | `payload_size` | Bytes after the header |
 | 8 | 4 | `u32` | `sequence` | Sender's packet sequence number |
-| 12 | 4 | `u32` | `session_id` | Server-assigned session; `0` before joining |
+| 12 | 4 | `u32` | `session_id` | Nonzero in `JOIN_ACCEPTED`, `PLAYER_INPUT`, and `DISCONNECT`; `0` otherwise |
 
 The datagram length must equal `16 + payload_size`. Join messages and `ERROR`
 use sequence `0`. Session packets use nonzero sequence numbers, incremented by
@@ -63,15 +62,17 @@ sequenceDiagram
     alt Slot available
         S-->>C: JOIN_ACCEPTED (same nonce, player ID, session ID)
         C->>S: PLAYER_INPUT (session ID)
-        S-->>C: WORLD_SNAPSHOT (next tick, then every 50 ms)
+        S-->>C: WORLD_SNAPSHOT (session ID 0; next tick, then every 50 ms)
     else Four players connected
         S-->>C: JOIN_REJECTED (same nonce, SERVER_FULL)
     end
 ```
 
 The client picks a fresh random `u64 client_nonce`. The server assigns an
-unused player ID (`0`-`3`) and a nonzero `u32 session_id` that it never reuses
-during that run.
+unused player ID (`0`-`3`) and a nonzero `u32 session_id` drawn from the
+operating system's cryptographic random source. It checks each candidate
+against all IDs assigned during that server run and never reuses one. If it
+cannot obtain an unused ID after 32 attempts, it rejects the join.
 
 | Packet | Payload fields in wire order |
 | --- | --- |
@@ -80,9 +81,10 @@ during that run.
 | `JOIN_REJECTED` | `client_nonce: u64`, `reason: u8` |
 
 A join request uses sequence `0` and session ID `0`. Join responses use
-sequence `0` and echo the nonce. A rejection has session ID `0`; reason `1`
-means `SERVER_FULL`. The server also rejects new sessions after exhausting its
-nonzero session IDs.
+sequence `0` and echo the nonce. `JOIN_ACCEPTED` carries the new session ID
+in its header; subsequent server packets use session ID `0`. A rejection also
+has session ID `0`; reason `1` means `SERVER_FULL`. The server also rejects new
+sessions after exhausting its nonzero session IDs.
 
 The current client retries the same request and nonce every 500 ms, up to 10
 attempts, then reports a timeout. It ignores acceptance and rejection packets
@@ -92,8 +94,10 @@ An `INVALID_SESSION` error closes the local session. While the session is
 active, the server repeats its acceptance for
 that nonce without creating another player. Reconnecting after leaving
 requires a new nonce. The session ID alone selects a session; it has no login
-or identity. A repeated join or valid in-session packet updates the session's
-return address and port.
+or identity. Its 32-bit size limits resistance to online guessing, and UDP
+does not protect it from a network observer: client inputs carry the ID in
+every packet. It must not be treated as a secret authenticator. A repeated
+join or valid in-session packet updates the session's return address and port.
 
 `DISCONNECT` has no payload and requires a nonzero sequence and a valid
 session ID. On disconnect, or after 5 seconds without a valid client packet,
@@ -131,15 +135,13 @@ seconds without a valid client packet.
 Up + Right + Fire is `00011001` (`0x19`). The server retains the latest valid
 input sequence and button state for each session. It discards duplicate or
 older input sequences. Any valid in-session packet updates the session's
-last-heard time, even if its input sequence is old. No movement, shooting, or
-other gameplay action is performed in this phase.
+last-heard time, even if its input sequence is old. The server applies movement
+from the current input; shooting and other gameplay actions are not implemented.
 
 `GameServer::tick()` returns `TickInput` with a four-entry `buttons` array and
-a `connectedMask`. A future ECS system can consume that value on each game
-tick. `GameServer::run()` currently schedules these ticks and discards the
-returned value. No separate input queue or command broadcast is implemented.
-The graphical client currently draws a placeholder sprite; it does not apply
-server world state because the server does not send any yet.
+a `connectedMask`. `GameServer::run()` applies those inputs to temporary player
+entities and broadcasts world snapshots. No separate input queue or command
+broadcast is implemented.
 
 ## Packet validation and errors
 

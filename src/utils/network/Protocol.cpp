@@ -120,14 +120,14 @@ static bool validJoinReply(const Header& header, const std::vector<std::uint8_t>
 /// Checks the implemented session notice fields.
 static bool validSessionNotice(const Header& header, const std::vector<std::uint8_t>& bytes)
 {
-	return header.payloadSize == 10 && header.sequence != 0 && header.sessionId != 0 &&
+	return header.payloadSize == 10 && header.sequence != 0 && header.sessionId == 0 &&
 		   bytes[HEADER_SIZE + 8] <= 3 && (bytes[HEADER_SIZE + 9] == 1 || bytes[HEADER_SIZE + 9] == 2);
 }
 
 /// Checks the masks, record count, and unique IDs in a world snapshot.
 static bool validWorldSnapshot(const Header& header, const std::vector<std::uint8_t>& bytes)
 {
-	if (header.sequence == 0 || header.sessionId == 0 || header.payloadSize < 11) {
+	if (header.sequence == 0 || header.sessionId != 0 || header.payloadSize < 11) {
 		return false;
 	}
 	const std::uint8_t connectedMask = bytes[HEADER_SIZE + 8];

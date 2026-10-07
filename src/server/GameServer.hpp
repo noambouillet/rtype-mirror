@@ -13,6 +13,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <optional>
+#include <unordered_set>
 #include <vector>
 
 #include "ECS/Coordinator/Coordinator.hpp"
@@ -64,6 +65,7 @@ private:
 	void handleJoin(const network::Datagram& datagram, std::uint64_t nonce, Clock::time_point now);
 	bool handleRepeatedJoin(const network::Datagram& datagram, std::uint64_t nonce, Clock::time_point now);
 	std::optional<std::size_t> findFreeSlot() const;
+	std::optional<std::uint32_t> createSessionId();
 	void sendJoinAccepted(const Session& session, std::uint8_t playerId);
 	void sendJoinRejected(const network::Datagram& datagram, std::uint64_t nonce);
 	void removeSession(std::uint8_t playerId, std::uint8_t reason);
@@ -79,7 +81,7 @@ private:
 	ecs::Coordinator _coordinator;
 	std::array<std::optional<Session>, MAX_PLAYERS> _sessions;
 	std::array<std::optional<ecs::Entity>, MAX_PLAYERS> _playerEntities;
-	std::uint64_t _nextSessionId;
+	std::unordered_set<std::uint32_t> _issuedSessionIds;
 	std::uint64_t _tick;
 };
 

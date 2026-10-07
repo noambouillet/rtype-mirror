@@ -129,7 +129,7 @@ void GameClient::handleJoinPacket(const Header& header, const std::vector<std::u
 /// Records validated server notices for the active session.
 void GameClient::handleSessionPacket(const Header& header, const std::vector<std::uint8_t>& bytes)
 {
-	if (header.type == PacketType::PlayerLeft && header.sessionId == _sessionId) {
+	if (header.type == PacketType::PlayerLeft) {
 		PlayerDeparture departure;
 		departure.playerId = bytes[HEADER_SIZE + 8];
 		departure.reason = bytes[HEADER_SIZE + 9];
@@ -140,7 +140,7 @@ void GameClient::handleSessionPacket(const Header& header, const std::vector<std
 			_status = ClientStatus::Disconnected;
 		}
 	} else if (header.type == PacketType::WorldSnapshot) {
-		handleSnapshot(header, bytes);
+		handleSnapshot(bytes);
 	}
 }
 
@@ -187,10 +187,10 @@ std::optional<std::vector<WorldEntity>> GameClient::parseEntities(const std::vec
 	return entities;
 }
 
-/// Replaces the cached world only with a complete, newer snapshot for this session.
-void GameClient::handleSnapshot(const Header& header, const std::vector<std::uint8_t>& bytes)
+/// Replaces the cached world only with a complete, newer snapshot from the connected server.
+void GameClient::handleSnapshot(const std::vector<std::uint8_t>& bytes)
 {
-	if (header.sessionId != _sessionId || bytes.size() < HEADER_SIZE + SNAPSHOT_HEADER_SIZE) {
+	if (bytes.size() < HEADER_SIZE + SNAPSHOT_HEADER_SIZE) {
 		return;
 	}
 	const std::uint64_t tick = readU64(bytes, HEADER_SIZE);

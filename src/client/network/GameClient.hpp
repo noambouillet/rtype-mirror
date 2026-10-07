@@ -66,7 +66,7 @@ private:
 	void handlePacket(const std::vector<std::uint8_t>& bytes);
 	void handleJoinPacket(const Header& header, const std::vector<std::uint8_t>& bytes);
 	void handleSessionPacket(const Header& header, const std::vector<std::uint8_t>& bytes);
-	void handleSnapshot(const Header& header, const std::vector<std::uint8_t>& bytes);
+	void handleSnapshot(const std::vector<std::uint8_t>& bytes);
 	static std::optional<std::vector<WorldEntity>> parseEntities(const std::vector<std::uint8_t>& bytes, std::uint8_t entityCount);
 	static float decodePosition(const std::vector<std::uint8_t>& bytes, std::size_t offset);
 	void sendJoin();

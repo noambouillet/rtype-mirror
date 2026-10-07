@@ -44,6 +44,9 @@ add_executable(r-type_server
     src/server/network/UdpServer.cpp
 )
 target_link_libraries(r-type_server PRIVATE rtype_protocol rtype_logger rtype_engine asio::asio Threads::Threads)
+if(WIN32)
+    target_link_libraries(r-type_server PRIVATE bcrypt)
+endif()
 
 add_executable(r-type_client
     src/client/main.cpp

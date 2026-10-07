@@ -8,15 +8,59 @@
 #include "GameServer.hpp"
 
 #include <algorithm>
+#include <cerrno>
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
 #include <limits>
 #include <thread>
 
+#ifdef _WIN32
+#include <bcrypt.h>
+#else
+#include <sys/random.h>
+#endif
+
+#include "utils/RTypeError.hpp"
 #include "utils/network/Protocol.hpp"
 
 namespace rtype {
+
+/// Draws a session ID from the operating system's cryptographic random source.
+#ifdef _WIN32
+
+static std::uint32_t randomSessionId()
+{
+	std::uint32_t id = 0;
+
+	if (BCryptGenRandom(nullptr, reinterpret_cast<PUCHAR>(&id), sizeof(id), BCRYPT_USE_SYSTEM_PREFERRED_RNG) < 0) {
+		throw NetworkError("Unable to generate a session ID");
+	}
+	return id;
+}
+
+#else
+
+static std::uint32_t randomSessionId()
+{
+	std::uint32_t id = 0;
+	std::size_t filled = 0;
+
+	while (filled < sizeof(id)) {
+		const ssize_t received = getrandom(reinterpret_cast<std::uint8_t*>(&id) + filled, sizeof(id) - filled, 0);
+		if (received < 0 && errno == EINTR) {
+			continue;
+		}
+		if (received <= 0) {
+			throw NetworkError("Unable to generate a session ID");
+		}
+		filled += static_cast<std::size_t>(received);
+	}
+	return id;
+}
+
+#endif
+
 /// Encodes a world coordinate as a signed 1/16-pixel value in network byte order. (So need to divide by 16.0f on the client side to get the original float value)
 static std::uint32_t encodePosition(float position)
 {
@@ -28,7 +72,7 @@ static std::uint32_t encodePosition(float position)
 }
 
 /// Create the Game Server instance, with mocked ECS components for player position and velocity (Will be replaced with an ECS components loader later).
-GameServer::GameServer(std::uint16_t port) : _network(port), _coordinator{}, _sessions{}, _playerEntities{}, _nextSessionId(1), _tick(0)
+GameServer::GameServer(std::uint16_t port) : _network(port), _coordinator{}, _sessions{}, _playerEntities{}, _issuedSessionIds{}, _tick(0)
 {
 	_coordinator.registerComponent<TmpPosition>();
 	_coordinator.registerComponent<TmpVelocity>();
@@ -218,12 +262,16 @@ void GameServer::handleJoin(const network::Datagram& datagram, std::uint64_t non
 	}
 
 	const auto freeIndex = findFreeSlot();
-	if (!freeIndex || _nextSessionId > std::numeric_limits<std::uint32_t>::max()) {
+	if (!freeIndex) {
 		sendJoinRejected(datagram, nonce);
 		return;
 	}
-	const auto sessionId = static_cast<std::uint32_t>(_nextSessionId++);
-	Session& session = _sessions[freeIndex.value()].emplace(datagram.sender, nonce, now, sessionId);
+	const auto sessionId = createSessionId();
+	if (!sessionId) {
+		sendJoinRejected(datagram, nonce);
+		return;
+	}
+	Session& session = _sessions[freeIndex.value()].emplace(datagram.sender, nonce, now, *sessionId);
 	sendJoinAccepted(session, static_cast<std::uint8_t>(freeIndex.value()));
 }
 
@@ -248,6 +296,25 @@ std::optional<std::size_t> GameServer::findFreeSlot() const
 	for (std::size_t index = 0; index < _sessions.size(); index++) {
 		if (!_sessions[index]) {
 			return index;
+		}
+	}
+	return std::nullopt;
+}
+
+/// Returns a nonzero ID that has never been assigned during this server run.
+std::optional<std::uint32_t> GameServer::createSessionId()
+{
+	if (_issuedSessionIds.size() >= std::numeric_limits<std::uint32_t>::max()) {
+		return std::nullopt;
+	}
+	for (std::size_t attempt = 0; attempt < 32; attempt++) {
+		const std::uint32_t id = randomSessionId();
+		if (id == 0) {
+			continue;
+		}
+		const bool wasInserted = _issuedSessionIds.insert(id).second;
+		if (wasInserted) {
+			return id;
 		}
 	}
 	return std::nullopt;
@@ -286,7 +353,7 @@ void GameServer::removeSession(std::uint8_t playerId, std::uint8_t reason)
 void GameServer::sendTo(Session& session, network::PacketType type, const std::vector<std::uint8_t>& payload)
 {
 	const std::uint32_t sequence = session.takeNextSequence();
-	_network.send(session.address(), network::makePacket(type, sequence, session.id(), payload));
+	_network.send(session.address(), network::makePacket(type, sequence, 0, payload));
 }
 
 /// Sends the same packet payload to every connected player.
