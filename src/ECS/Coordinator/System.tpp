@@ -13,20 +13,20 @@ namespace rtype::ecs {
 template<typename T>
 T& Coordinator::registerSystem()
 {
-    return _systems.registerSystem<T>();
+    return _systemsManager.registerSystem<T>();
 }
 
 ///Set the component signature an entity needs to be handled by the system T.
 template<typename T>
 void Coordinator::setSystemSignature(Signature s)
 {
-    _systems.setSignature<T>(s);
+    _systemsManager.setSignature<T>(s);
 }
 
 ///Get a reference to the already registered system T.
 template<typename T>
 T& Coordinator::getSystem()
 {
-    return _systems.getSystem<T>();
+    return _systemsManager.getSystem<T>();
 }
 } // namespace rtype::ecs

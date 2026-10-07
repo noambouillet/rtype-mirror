@@ -15,44 +15,44 @@ namespace rtype::ecs {
 template<typename T>
 void Coordinator::registerComponent()
 {
-    _components.registerComponent<T>();
+    _componentsManager.registerComponent<T>();
 }
 
 ///Add a component of type T to the entity, update its signature and notify the systems.
 template<typename T>
 void Coordinator::addComponent(Entity e, T comp)
 {
-    assert(_entities.isAlive(e) && "entity is not alive");
-    _components.add<T>(e, std::move(comp));
-    Signature sig = _entities.getSignature(e);
-    sig.set(_components.getType<T>(), true);
-    _entities.setSignature(e, sig);
-    _systems.entitySignatureChanged(e, sig);
+    assert(_entitiesManager.isAlive(e) && "entity is not alive");
+    _componentsManager.add<T>(e, std::move(comp));
+    Signature sig = _entitiesManager.getSignature(e);
+    sig.set(_componentsManager.getType<T>(), true);
+    _entitiesManager.setSignature(e, sig);
+    _systemsManager.entitySignatureChanged(e, sig);
 }
 
 ///Remove the component of type T from the entity, update its signature and notify the systems.
 template<typename T>
 void Coordinator::removeComponent(Entity e)
 {
-    assert(_entities.isAlive(e) && "entity is not alive");
-    _components.remove<T>(e);
-    Signature sig = _entities.getSignature(e);
-    sig.set(_components.getType<T>(), false);
-    _entities.setSignature(e, sig);
-    _systems.entitySignatureChanged(e, sig);
+    assert(_entitiesManager.isAlive(e) && "entity is not alive");
+    _componentsManager.remove<T>(e);
+    Signature sig = _entitiesManager.getSignature(e);
+    sig.set(_componentsManager.getType<T>(), false);
+    _entitiesManager.setSignature(e, sig);
+    _systemsManager.entitySignatureChanged(e, sig);
 }
 
 ///Get a reference to the component of type T of the given entity.
 template<typename T>
 T& Coordinator::getComponent(Entity e)
 {
-    return _components.get<T>(e);
+    return _componentsManager.get<T>(e);
 }
 
 ///Get the ComponentType id of T, used to build system signatures.
 template<typename T>
 ComponentType Coordinator::getComponentType()
 {
-    return _components.getType<T>();
+    return _componentsManager.getType<T>();
 }
 } // namespace rtype::ecs

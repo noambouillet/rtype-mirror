@@ -11,6 +11,8 @@
 #include <chrono>
 #include <cstdint>
 
+#include "AssetManager.hpp"
+
 namespace rtype {
 
 class Sfml {
@@ -30,13 +32,12 @@ private:
 	std::uint8_t joystickButtons() const;
 
 	sf::RenderWindow _window;
-	sf::Texture _playerTexture;
 	sf::Sprite _playerSprite;
 	unsigned int _joystickId;
 	std::chrono::steady_clock::time_point _lastFrame;
 
 public:
-	Sfml();
+	explicit Sfml(AssetManager& assets);
 	bool isOpen() const;
 	void handleEvent();
 	std::uint8_t buttons() const;

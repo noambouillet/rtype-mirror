@@ -7,25 +7,50 @@
 
 #include "GameServer.hpp"
 
+#include <algorithm>
+#include <cmath>
 #include <cstddef>
+#include <cstdint>
 #include <limits>
 #include <thread>
 
 #include "utils/network/Protocol.hpp"
 
 namespace rtype {
-
-GameServer::GameServer(std::uint16_t port) : _network(port), _sessions{}, _nextSessionId(1), _tick(0)
+/// Encodes a world coordinate as a signed 1/16-pixel value in network byte order. (So need to divide by 16.0f on the client side to get the original float value)
+static std::uint32_t encodePosition(float position)
 {
+	const double scaled = static_cast<double>(position) * 16.0;
+	const double minimum = static_cast<double>(std::numeric_limits<std::int32_t>::min());
+	const double maximum = static_cast<double>(std::numeric_limits<std::int32_t>::max());
+	const auto fixed = static_cast<std::int32_t>(std::lround(std::clamp(scaled, minimum, maximum)));
+	return static_cast<std::uint32_t>(fixed);
+}
+
+/// Create the Game Server instance, with mocked ECS components for player position and velocity (Will be replaced with an ECS components loader later).
+GameServer::GameServer(std::uint16_t port) : _network(port), _coordinator{}, _sessions{}, _playerEntities{}, _nextSessionId(1), _tick(0)
+{
+	_coordinator.registerComponent<TmpPosition>();
+	_coordinator.registerComponent<TmpVelocity>();
 }
 
 /// Runs fixed network ticks until "running" becomes false.
 void GameServer::run(const volatile std::sig_atomic_t& running)
 {
 	auto nextTick = Clock::now();
+	auto snapshotElapsed = Clock::duration::zero();
+	std::uint8_t previousConnectedMask = 0;
+	const float deltaTime = std::chrono::duration<float>(TICK_DURATION).count();
 
 	while (running != 0) {
-		tick();
+		const TickInput input = tick();
+		updateWorld(input, deltaTime);
+		snapshotElapsed += TICK_DURATION;
+		if (snapshotElapsed >= SNAPSHOT_INTERVAL || input.connectedMask != previousConnectedMask) {
+			broadcast(network::PacketType::WorldSnapshot, buildSnapshot(input));
+			snapshotElapsed %= SNAPSHOT_INTERVAL;
+		}
+		previousConnectedMask = input.connectedMask;
 		nextTick += TICK_DURATION;
 		const auto now = Clock::now();
 		if (nextTick < now) {
@@ -33,6 +58,86 @@ void GameServer::run(const volatile std::sig_atomic_t& running)
 		}
 		std::this_thread::sleep_until(nextTick);
 	}
+}
+
+/// Handles the creation and destruction of ECS entities based on connection states
+void GameServer::syncPlayerEntities(const TickInput& input)
+{
+	for (std::size_t playerId = 0; playerId < MAX_PLAYERS; playerId++) {
+		const std::uint8_t playerMask = static_cast<std::uint8_t>(1 << playerId);
+		const bool connected = (input.connectedMask & playerMask) != 0;
+
+		if (connected && !_playerEntities[playerId]) {
+			const ecs::Entity entity = _coordinator.createEntity();
+			_coordinator.addComponent(entity, TmpPosition{.x = 100.0f, .y = 100.0f + static_cast<float>(playerId) * 50.0f});
+			_coordinator.addComponent(entity, TmpVelocity{.x = 0.0f, .y = 0.0f});
+			_playerEntities[playerId] = entity;
+		} else if (!connected && _playerEntities[playerId]) {
+			_coordinator.destroyEntity(*_playerEntities[playerId]);
+			_playerEntities[playerId].reset();
+		}
+	}
+}
+
+/// Applies network inputs to calculate velocity and update position
+void GameServer::applyPlayerPhysics(const TickInput& input, float deltaTime)
+{
+	for (std::size_t playerId = 0; playerId < MAX_PLAYERS; playerId++) {
+		if (!_playerEntities[playerId])
+			continue;
+		const std::uint8_t buttons = input.buttons[playerId];
+		const float horizontal = static_cast<float>((buttons & BUTTON_RIGHT) != 0) - static_cast<float>((buttons & BUTTON_LEFT) != 0);
+		const float vertical = static_cast<float>((buttons & BUTTON_DOWN) != 0) - static_cast<float>((buttons & BUTTON_UP) != 0);
+		const float length = std::sqrt(horizontal * horizontal + vertical * vertical);
+
+		auto& velocity = _coordinator.getComponent<TmpVelocity>(*_playerEntities[playerId]);
+		if (length == 0.0f) {
+			velocity = {.x = 0.0f, .y = 0.0f};
+		} else {
+			velocity = {.x = PLAYER_SPEED * horizontal / length, .y = PLAYER_SPEED * vertical / length};
+		}
+		auto& position = _coordinator.getComponent<TmpPosition>(*_playerEntities[playerId]);
+		position.x += velocity.x * deltaTime;
+		position.y += velocity.y * deltaTime;
+	}
+}
+
+/// Updates the world state based on the current inputs and elapsed time since the last tick.
+void GameServer::updateWorld(const TickInput& input, float deltaTime)
+{
+	syncPlayerEntities(input);
+	applyPlayerPhysics(input, deltaTime);
+}
+
+/// Builds the documented full snapshot payload from the active player entities.
+std::vector<std::uint8_t> GameServer::buildSnapshot(const TickInput& input)
+{
+	std::vector<std::uint8_t> payload;
+	payload.reserve(11 + MAX_PLAYERS * 16);
+	network::appendU64(payload, _tick);
+	payload.push_back(input.connectedMask);
+	payload.push_back(input.connectedMask);
+	payload.push_back(0);
+
+	std::uint8_t entityCount = 0;
+	for (std::size_t playerId = 0; playerId < MAX_PLAYERS; playerId++) {
+		const std::uint8_t playerMask = static_cast<std::uint8_t>(1 << playerId);
+		if ((input.connectedMask & playerMask) == 0 || !_playerEntities[playerId]) {
+			continue;
+		}
+		const ecs::Entity entity = *_playerEntities[playerId];
+		const auto& position = _coordinator.getComponent<TmpPosition>(entity);
+		network::appendU32(payload, entity.id());
+		payload.push_back(1);
+		payload.push_back(static_cast<std::uint8_t>(playerId));
+		payload.push_back(static_cast<std::uint8_t>(playerId));
+		payload.push_back(1);
+		network::appendU32(payload, encodePosition(position.x));
+		network::appendU32(payload, encodePosition(position.y));
+		entityCount++;
+	}
+	payload[10] = entityCount;
+	return payload;
 }
 
 /// Processes queued packets and returns the current inputs for a future game system.
