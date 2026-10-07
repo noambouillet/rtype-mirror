@@ -97,10 +97,10 @@ ParsedHeader parseClientHeader(const std::vector<std::uint8_t>& bytes)
 		}
 	} else {
 		result.header = Header{
-			.type = static_cast<PacketType>(bytes[5]),
-			.payloadSize = static_cast<std::uint16_t>(bytes[6] << 8 | bytes[7]),
-			.sequence = result.offendingSequence,
-			.sessionId = readU32(bytes, 12)};
+			static_cast<PacketType>(bytes[5]),
+			static_cast<std::uint16_t>(bytes[6] << 8 | bytes[7]),
+			result.offendingSequence,
+			readU32(bytes, 12)};
 	}
 	return result;
 }

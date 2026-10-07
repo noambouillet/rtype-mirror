@@ -71,11 +71,9 @@ static std::uint32_t encodePosition(float position)
 	return static_cast<std::uint32_t>(fixed);
 }
 
-/// Create the Game Server instance, with mocked ECS components for player position and velocity (Will be replaced with an ECS components loader later).
-GameServer::GameServer(std::uint16_t port) : _network(port), _coordinator{}, _sessions{}, _playerEntities{}, _issuedSessionIds{}, _tick(0)
+/// Creates the game server: binds the UDP port and starts an empty world.
+GameServer::GameServer(std::uint16_t port) : _network(port), _world{}, _sessions{}, _issuedSessionIds{}, _tick(0)
 {
-	_coordinator.registerComponent<TmpPosition>();
-	_coordinator.registerComponent<TmpVelocity>();
 }
 
 /// Runs fixed network ticks until "running" becomes false.
@@ -88,7 +86,7 @@ void GameServer::run(const volatile std::sig_atomic_t& running)
 
 	while (running != 0) {
 		const TickInput input = tick();
-		updateWorld(input, deltaTime);
+		_world.update(input, deltaTime);
 		snapshotElapsed += TICK_DURATION;
 		if (snapshotElapsed >= SNAPSHOT_INTERVAL || input.connectedMask != previousConnectedMask) {
 			broadcast(network::PacketType::WorldSnapshot, buildSnapshot(input));
@@ -104,87 +102,35 @@ void GameServer::run(const volatile std::sig_atomic_t& running)
 	}
 }
 
-/// Handles the creation and destruction of ECS entities based on connection states
-void GameServer::syncPlayerEntities(const TickInput& input)
+/// Appends one 16-byte entity record as documented in the RFC.
+static void appendEntityRecord(std::vector<std::uint8_t>& payload, const GameWorld::EntityState& entity)
 {
-	for (std::size_t playerId = 0; playerId < MAX_PLAYERS; playerId++) {
-		const std::uint8_t playerMask = static_cast<std::uint8_t>(1 << playerId);
-		const bool connected = (input.connectedMask & playerMask) != 0;
-
-		if (connected && !_playerEntities[playerId]) {
-			const ecs::Entity entity = _coordinator.createEntity();
-			_coordinator.addComponent(entity, TmpPosition{.x = 100.0f, .y = 100.0f + static_cast<float>(playerId) * 50.0f});
-			_coordinator.addComponent(entity, TmpVelocity{.x = 0.0f, .y = 0.0f});
-			_playerEntities[playerId] = entity;
-		} else if (!connected && _playerEntities[playerId]) {
-			_coordinator.destroyEntity(*_playerEntities[playerId]);
-			_playerEntities[playerId].reset();
-		}
-	}
+	network::appendU32(payload, entity.id);
+	payload.push_back(static_cast<std::uint8_t>(entity.type));
+	payload.push_back(entity.owner);
+	payload.push_back(entity.variant);
+	payload.push_back(entity.health);
+	network::appendU32(payload, encodePosition(entity.x));
+	network::appendU32(payload, encodePosition(entity.y));
 }
 
-/// Applies network inputs to calculate velocity and update position
-void GameServer::applyPlayerPhysics(const TickInput& input, float deltaTime)
-{
-	for (std::size_t playerId = 0; playerId < MAX_PLAYERS; playerId++) {
-		if (!_playerEntities[playerId])
-			continue;
-		const std::uint8_t buttons = input.buttons[playerId];
-		const float horizontal = static_cast<float>((buttons & BUTTON_RIGHT) != 0) - static_cast<float>((buttons & BUTTON_LEFT) != 0);
-		const float vertical = static_cast<float>((buttons & BUTTON_DOWN) != 0) - static_cast<float>((buttons & BUTTON_UP) != 0);
-		const float length = std::sqrt(horizontal * horizontal + vertical * vertical);
-
-		auto& velocity = _coordinator.getComponent<TmpVelocity>(*_playerEntities[playerId]);
-		if (length == 0.0f) {
-			velocity = {.x = 0.0f, .y = 0.0f};
-		} else {
-			velocity = {.x = PLAYER_SPEED * horizontal / length, .y = PLAYER_SPEED * vertical / length};
-		}
-		auto& position = _coordinator.getComponent<TmpPosition>(*_playerEntities[playerId]);
-		position.x += velocity.x * deltaTime;
-		position.y += velocity.y * deltaTime;
-	}
-}
-
-/// Updates the world state based on the current inputs and elapsed time since the last tick.
-void GameServer::updateWorld(const TickInput& input, float deltaTime)
-{
-	syncPlayerEntities(input);
-	applyPlayerPhysics(input, deltaTime);
-}
-
-/// Builds the documented full snapshot payload from the active player entities.
+/// Builds the documented full snapshot payload from the world's replicated entities.
 std::vector<std::uint8_t> GameServer::buildSnapshot(const TickInput& input)
 {
+	const auto entities = _world.replicatedEntities();
 	std::vector<std::uint8_t> payload;
-	payload.reserve(11 + MAX_PLAYERS * 16);
+	payload.reserve(SNAPSHOT_HEADER_SIZE + entities.size() * ENTITY_RECORD_SIZE);
 	network::appendU64(payload, _tick);
 	payload.push_back(input.connectedMask);
-	payload.push_back(input.connectedMask);
-	payload.push_back(0);
-
-	std::uint8_t entityCount = 0;
-	for (std::size_t playerId = 0; playerId < MAX_PLAYERS; playerId++) {
-		const std::uint8_t playerMask = static_cast<std::uint8_t>(1 << playerId);
-		if ((input.connectedMask & playerMask) == 0 || !_playerEntities[playerId]) {
-			continue;
-		}
-		const ecs::Entity entity = *_playerEntities[playerId];
-		const auto& position = _coordinator.getComponent<TmpPosition>(entity);
-		network::appendU32(payload, entity.id());
-		payload.push_back(1);
-		payload.push_back(static_cast<std::uint8_t>(playerId));
-		payload.push_back(static_cast<std::uint8_t>(playerId));
-		payload.push_back(1);
-		network::appendU32(payload, encodePosition(position.x));
-		network::appendU32(payload, encodePosition(position.y));
-		entityCount++;
+	payload.push_back(_world.aliveMask());
+	payload.push_back(static_cast<std::uint8_t>(entities.size()));
+	for (const auto& entity : entities) {
+		appendEntityRecord(payload, entity);
 	}
-	payload[10] = entityCount;
 	return payload;
 }
 
-/// Processes queued packets and returns the current inputs for a future game system.
+/// Processes queued packets and returns the current inputs for the game world.
 GameServer::TickInput GameServer::tick()
 {
 	_tick++;
@@ -245,7 +191,7 @@ void GameServer::handleSessionDatagram(const network::Datagram& datagram, const 
 		if (header.type == network::PacketType::Disconnect) {
 			removeSession(static_cast<std::uint8_t>(index), 1);
 		} else {
-			session->acceptInput({.sequence = header.sequence, .buttons = datagram.bytes[network::HEADER_SIZE]}, now);
+			session->acceptInput({header.sequence, datagram.bytes[network::HEADER_SIZE]}, now);
 		}
 		return;
 	}
@@ -369,7 +315,7 @@ void GameServer::broadcast(network::PacketType type, const std::vector<std::uint
 /// Expires silent sessions and returns fresh button states for this tick.
 GameServer::TickInput GameServer::collectInput(Clock::time_point now)
 {
-	TickInput input{.buttons = {}, .connectedMask = 0};
+	TickInput input{{}, 0};
 	for (std::size_t index = 0; index < _sessions.size(); index++) {
 		auto& session = _sessions[index];
 		if (!session) {

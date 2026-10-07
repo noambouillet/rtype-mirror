@@ -15,15 +15,9 @@
 #include <vector>
 
 #include "UdpClient.hpp"
+#include "utils/network/Protocol.hpp"
 
 namespace rtype::network {
-
-enum class EntityType : std::uint8_t {
-	Player = 1,
-	Monster = 2,
-	Laser = 3,
-	Bonus = 4
-};
 
 struct WorldEntity {
 	std::uint32_t entityId;
@@ -60,7 +54,6 @@ private:
 	static constexpr unsigned int MAX_JOIN_ATTEMPTS = 10;
 	static constexpr std::size_t SNAPSHOT_HEADER_SIZE = 11;
 	static constexpr std::size_t ENTITY_RECORD_SIZE = 16;
-	static constexpr std::size_t MAX_SNAPSHOT_ENTITIES = 64;
 	using Clock = std::chrono::steady_clock;
 
 	void handlePacket(const std::vector<std::uint8_t>& bytes);
