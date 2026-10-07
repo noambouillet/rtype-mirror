@@ -27,7 +27,6 @@ public:
 	RenderSystem();
 	static Signature signature(Coordinator& coordinator);
 	void draw(Coordinator& coordinator, sf::RenderWindow& window, const TextureMap& textures);
-	/// Mutable so the camera can be moved (scrolling, shake...).
 	sf::View& getWorldView();
 	const sf::View& getUIView() const;
 
