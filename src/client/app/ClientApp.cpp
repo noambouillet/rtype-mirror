@@ -78,7 +78,6 @@ static bool updateFrame(Sfml& window, network::GameClient& client, Logger& logge
 	}
 	const std::uint8_t buttons = window.buttons();
 	client.tick(buttons);
-	window.movePlayer(buttons);
 	reportNotices(client, logger);
 	if (client.status() != previous) {
 		previous = client.status();
@@ -86,7 +85,7 @@ static bool updateFrame(Sfml& window, network::GameClient& client, Logger& logge
 			return false;
 		}
 	}
-	window.displayWindow();
+	window.displayWindow(client.worldSnapshot());
 	return true;
 }
 

@@ -7,6 +7,8 @@
 
 #include "Sfml.hpp"
 
+#include "client/network/GameClient.hpp"
+#include "utils/RTypeError.hpp"
 #include <algorithm>
 #include <cmath>
 #include <optional>
@@ -15,12 +17,14 @@
 
 namespace rtype {
 
-/// Opens the window and loads a player ship from the spritesheet.
-Sfml::Sfml(AssetManager& assets) : _window(sf::VideoMode({WINDOW_WIDTH, WINDOW_HEIGHT}), "R-Type"), _playerSprite(assets.sprite(sprites::PLAYER_SHEET, sprites::PLAYER_SHIP)), _joystickId(0), _lastFrame(std::chrono::steady_clock::now())
+/// Opens the window and prepares the game using the AssetManager
+Sfml::Sfml(AssetManager& assets) : 
+    _window(sf::VideoMode({WINDOW_WIDTH, WINDOW_HEIGHT}), "R-Type"), 
+    _joystickId(0), 
+    _lastFrame(std::chrono::steady_clock::now()),
+    _assets(assets)
 {
-	_window.setFramerateLimit(60);
-	_playerSprite.setScale({3.0, 3.0});
-	_playerSprite.setPosition({100.0, 200.0});
+    _window.setFramerateLimit(60);
 }
 
 bool Sfml::isOpen() const
@@ -101,33 +105,23 @@ std::uint8_t Sfml::joystickButtons() const
 	return value;
 }
 
-/// Moves the temporary sprite locally while server world state is unavailable.
-void Sfml::movePlayer(std::uint8_t buttons)
-{
-	const auto now = std::chrono::steady_clock::now();
-	const float elapsed = std::min(std::chrono::duration<float>(now - _lastFrame).count(), MAX_FRAME_SECONDS);
-	_lastFrame = now;
-	const float horizontal = static_cast<float>((buttons & BUTTON_RIGHT) != 0) - static_cast<float>((buttons & BUTTON_LEFT) != 0);
-	const float vertical = static_cast<float>((buttons & BUTTON_DOWN) != 0) - static_cast<float>((buttons & BUTTON_UP) != 0);
-	const float length = std::sqrt((horizontal * horizontal) + (vertical * vertical));
-	if (length == 0) {
-		return;
-	}
-	sf::Vector2f position = _playerSprite.getPosition();
-	const float distance = PLAYER_SPEED * elapsed / length;
-	position.x += horizontal * distance;
-	position.y += vertical * distance;
-	const sf::FloatRect bounds = _playerSprite.getGlobalBounds();
-	position.x = std::clamp(position.x, 0.0F, std::max(0.0F, static_cast<float>(_window.getSize().x) - bounds.size.x));
-	position.y = std::clamp(position.y, 0.0F, std::max(0.0F, static_cast<float>(_window.getSize().y) - bounds.size.y));
-	_playerSprite.setPosition(position);
-}
-
-/// Draws the temporary sprite while world snapshots are unimplemented.
-void Sfml::displayWindow()
+/// Draws every entities from the snapshot, or a black screen if not yet connected
+void Sfml::displayWindow(const std::optional<network::WorldSnapshot>& snapshot)
 {
 	_window.clear(sf::Color::Black);
-	_window.draw(_playerSprite);
+	if (snapshot) {
+		for (const auto& entity : snapshot->entities) {
+			if (entity.entityType == network::EntityType::Player) {
+				std::uint8_t safeSpriteId = entity.spriteId;
+				if (safeSpriteId >= _playerTextures.size())
+					safeSpriteId = 0;
+				sf::Sprite sprite(_playerTextures[safeSpriteId]);
+				sprite.setScale({0.5f, 0.5f});
+				sprite.setPosition({entity.x, entity.y});
+				_window.draw(sprite);
+			}
+		}
+	}
 	_window.display();
 }
 
