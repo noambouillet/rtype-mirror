@@ -7,24 +7,21 @@
 
 #include "Sfml.hpp"
 
-#include "client/network/GameClient.hpp"
-#include "utils/RTypeError.hpp"
-#include <algorithm>
-#include <cmath>
 #include <optional>
 
 #include "SpriteRegions.hpp"
+#include "client/network/GameClient.hpp"
 
 namespace rtype {
 
 /// Opens the window and prepares the game using the AssetManager
-Sfml::Sfml(AssetManager& assets) : 
-    _window(sf::VideoMode({WINDOW_WIDTH, WINDOW_HEIGHT}), "R-Type"), 
-    _joystickId(0), 
-    _lastFrame(std::chrono::steady_clock::now()),
-    _assets(assets)
+Sfml::Sfml(AssetManager& assets)
+	: _window(sf::VideoMode({WINDOW_WIDTH, WINDOW_HEIGHT}), "R-Type"),
+	  _assets(assets),
+	  _joystickId(0),
+	  _lastFrame(std::chrono::steady_clock::now())
 {
-    _window.setFramerateLimit(60);
+	_window.setFramerateLimit(60);
 }
 
 bool Sfml::isOpen() const
@@ -113,10 +110,12 @@ void Sfml::displayWindow(const std::optional<network::WorldSnapshot>& snapshot)
 		for (const auto& entity : snapshot->entities) {
 			if (entity.entityType == network::EntityType::Player) {
 				std::uint8_t safeSpriteId = entity.spriteId;
-				if (safeSpriteId >= _playerTextures.size())
+				if (safeSpriteId >= sprites::PLAYER_SHIPS.size()) {
 					safeSpriteId = 0;
-				sf::Sprite sprite(_playerTextures[safeSpriteId]);
-				sprite.setScale({0.5f, 0.5f});
+				}
+				sf::Sprite sprite = _assets.sprite(sprites::PLAYER_SHEET, sprites::PLAYER_SHIPS[safeSpriteId]);
+				sprite.setOrigin({16.0F, 8.0F});
+				sprite.setScale({2.0F, 2.0F});
 				sprite.setPosition({entity.x, entity.y});
 				_window.draw(sprite);
 			}

@@ -181,7 +181,7 @@ The locally rendered starfield does not count.
 | Enemy projectile | `4` | `255` |
 
 For player ships, `variant` equals the player ID. Render IDs `0`-`3` in blue,
-red, green, and yellow respectively. Other kinds use variant `0` as their base
+red, green, and magenta respectively. Other kinds use variant `0` as their base
 appearance; clients may show that base for unknown non-player variants.
 
 ### Full snapshot

@@ -8,10 +8,7 @@
 #pragma once
 
 #include <SFML/Graphics.hpp>
-#include <algorithm>
-#include <array>
 #include <chrono>
-#include <cmath>
 #include <cstdint>
 
 #include "AssetManager.hpp"
@@ -38,7 +35,7 @@ private:
 	std::uint8_t joystickButtons() const;
 
 	sf::RenderWindow _window;
-  AssetManager& _assets;
+	AssetManager& _assets;
 	unsigned int _joystickId;
 	std::chrono::steady_clock::time_point _lastFrame;
 
