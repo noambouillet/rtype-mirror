@@ -42,6 +42,13 @@ void Coordinator::removeComponent(Entity e)
     _systemsManager.entitySignatureChanged(e, sig);
 }
 
+///Check whether the given entity owns a component of type T.
+template<typename T>
+bool Coordinator::hasComponent(Entity e)
+{
+    return _componentsManager.has<T>(e);
+}
+
 ///Get a reference to the component of type T of the given entity.
 template<typename T>
 T& Coordinator::getComponent(Entity e)

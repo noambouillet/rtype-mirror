@@ -29,6 +29,8 @@ public:
 	template <typename T>
 	void remove(Entity e);
 	template <typename T>
+	bool has(Entity e);
+	template <typename T>
 	T& get(Entity e);
 	void entityDestroyed(Entity e);
 
