@@ -21,13 +21,33 @@ target_include_directories(rtype_protocol PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src
 add_library(rtype_logger src/utils/Logger.cpp)
 target_include_directories(rtype_logger PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
 
+add_library(rtype_ecs
+    src/ECS/Entity/Entity.cpp
+    src/ECS/Entity/EntityManager.cpp
+    src/ECS/Component/ComponentManager.cpp
+    src/ECS/System/SystemManager.cpp
+    src/ECS/Coordinator/Coordinator.cpp
+    src/ECS/System/Systems/MovementSystem.cpp
+    src/ECS/System/Systems/CollisionSystem.cpp
+    src/ECS/System/Systems/DamageSystem.cpp
+    src/ECS/System/Systems/DestroySystem.cpp
+)
+target_include_directories(rtype_ecs PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/ECS
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/ECS/Entity
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/ECS/Component
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/ECS/System
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/ECS/System/Systems
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/ECS/Coordinator
+)
+
 add_executable(r-type_server
     src/server/main.cpp
     src/server/GameServer.cpp
     src/server/Session.cpp
     src/server/network/UdpServer.cpp
 )
-target_link_libraries(r-type_server PRIVATE rtype_protocol rtype_logger asio::asio Threads::Threads)
+target_link_libraries(r-type_server PRIVATE rtype_protocol rtype_logger rtype_ecs asio::asio Threads::Threads)
 
 add_executable(r-type_client
     src/client/main.cpp
