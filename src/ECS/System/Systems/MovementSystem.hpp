@@ -14,9 +14,9 @@
 namespace rtype::ecs {
 
 class MovementSystem : public System {
- public:
-  Signature signature(Coordinator& coordinator);
-  void update(Coordinator& coordinator, float dt);
+public:
+	Signature signature(Coordinator& coordinator);
+	void update(Coordinator& coordinator, float dt);
 };
 
 }  // namespace rtype::ecs
