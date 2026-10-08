@@ -21,9 +21,9 @@ struct WorldSnapshot;
 
 class Sfml {
 private:
-	static constexpr float JOYSTICK_THRESHOLD = 50;
-	static constexpr float PLAYER_SPEED = 250;
-	static constexpr float MAX_FRAME_SECONDS = 0.1;
+	static constexpr float JOYSTICK_THRESHOLD = 50.0F;
+	static constexpr float PLAYER_SPEED = 250.0F;
+	static constexpr float MAX_FRAME_SECONDS = 0.1F;
 	static constexpr std::uint32_t WINDOW_WIDTH = 1280;
 	static constexpr std::uint32_t WINDOW_HEIGHT = 720;
 
