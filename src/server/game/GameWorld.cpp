@@ -94,6 +94,7 @@ void GameWorld::runSystems(const Input& input, float deltaTime)
 }
 
 // Spawns a ship for each newly connected player and removes the ship of each player who left.
+// Currently, a dead player respawns when he disconnect/reconnect.
 void GameWorld::syncPlayerEntities(const Input& input)
 {
 	for (std::size_t playerId = 0; playerId < MAX_PLAYERS; playerId++) {
