@@ -93,13 +93,7 @@ void GameWorld::runSystems(const Input& input, float deltaTime)
 	_coordinator.getSystem<ecs::DestroySystem>().update(_coordinator);
 }
 
-/// Keeps one ship per connected player, using `connectedMask` (bit N set = player N connected).
-/// `_playerEntities[N]` holds the handle of player N's ship, or nothing if the slot has no ship.
-/// - Player connected but no handle yet: their ship is created.
-/// - Player disconnected but a handle remains: their ship is destroyed and the slot is cleared.
-/// The handle is kept even after the ship dies in game, so a dead player does not respawn
-/// until they reconnect. `aliveMask()` uses `isAlive()` to tell those players apart, and destroying
-/// the stale handle on disconnect does nothing.
+// Spawns a ship for each newly connected player and removes the ship of each player who left.
 void GameWorld::syncPlayerEntities(const Input& input)
 {
 	for (std::size_t playerId = 0; playerId < MAX_PLAYERS; playerId++) {
