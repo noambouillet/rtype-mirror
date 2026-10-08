@@ -17,23 +17,29 @@ jobs:
           submodules: recursive
 
       - name: Install System Dependencies
-        run: sudo apt-get update && sudo apt-get install -y build-essential cmake curl zip unzip tar libx11-dev libxcursor-dev libxi-dev libgl1-mesa-dev libfontconfig1-dev libudev-dev
+        run: sudo apt-get update && sudo apt-get install -y build-essential cmake ninja-build pkg-config curl zip unzip tar libx11-dev libxcursor-dev libxi-dev libgl1-mesa-dev libfontconfig1-dev libudev-dev
 
-      - name: Export GitHub Actions cache environment variables
-        uses: actions/github-script@v9
-        with:
-          script: |
-            core.exportVariable('ACTIONS_CACHE_URL', process.env.ACTIONS_CACHE_URL || '');
-            core.exportVariable('ACTIONS_RUNTIME_TOKEN', process.env.ACTIONS_RUNTIME_TOKEN || '');
+      - name: Create vcpkg archives directory
+        run: mkdir -p ${{ github.workspace }}/.vcpkg-archives
 
       - name: Set up Vcpkg Binary Cache
-        run: echo "VCPKG_BINARY_SOURCES=clear;x-gha,readwrite" >> $GITHUB_ENV
+        run: echo "VCPKG_BINARY_SOURCES=clear;files,${{ github.workspace }}/.vcpkg-archives,readwrite" >> $GITHUB_ENV
+
+      - name: Cache Vcpkg packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            ${{ github.workspace }}/.vcpkg-archives
+            ${{ github.workspace }}/build/vcpkg_installed
+          key: ${{ runner.os }}-vcpkg-${{ hashFiles('**/vcpkg.json') }}
+          restore-keys: |
+            ${{ runner.os }}-vcpkg-
 
       - name: Bootstrap Vcpkg
         run: ./vcpkg/bootstrap-vcpkg.sh
 
       - name: Configure CMake
-        run: cmake -B build -DCMAKE_TOOLCHAIN_FILE=vcpkg/scripts/buildsystems/vcpkg.cmake
+        run: cmake -B build -G Ninja -DCMAKE_TOOLCHAIN_FILE=vcpkg/scripts/buildsystems/vcpkg.cmake
 
       - name: Build Project
         run: cmake --build build

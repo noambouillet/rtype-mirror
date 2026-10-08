@@ -15,7 +15,7 @@
 # Package manager output (keep manifests and lockfiles tracked)
 /vcpkg_installed/
 .vcpkg-root
-/vcpkg_installed/
+.vcpkg-archives/
 /.conan/
 /conan_toolchain.cmake
 /conanbuild*
