@@ -98,6 +98,8 @@ int runClient(const ClientOptions& options)
 	logger->setVerbose(true);
 	AssetManager assets;
 	assets.preload(sprites::PLAYER_SHEET);
+	assets.preload(sprites::SHOT_SHEET);
+	assets.preload(sprites::ENEMY_SHEET);
 	network::GameClient client(options.host, options.port);
 	Sfml window(assets);
 	auto previous = client.status();
