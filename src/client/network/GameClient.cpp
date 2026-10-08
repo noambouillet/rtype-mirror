@@ -169,19 +169,19 @@ std::optional<std::vector<WorldEntity>> GameClient::parseEntities(const std::vec
 		const std::uint8_t spriteId = bytes[recordOffset + 6];
 		const EntityType entityType = static_cast<EntityType>(rawType);
 
-		if (entityType < EntityType::Player || entityType > EntityType::Bonus ||
-			((entityType == EntityType::Player || entityType == EntityType::Laser) ? ownerPlayerId > 3 : ownerPlayerId != 255) ||
+		if (entityType < EntityType::Player || entityType > EntityType::EnemyProjectile ||
+			((entityType == EntityType::Player || entityType == EntityType::PlayerProjectile) ? ownerPlayerId > 3 : ownerPlayerId != NO_OWNER) ||
 			(entityType == EntityType::Player && spriteId != ownerPlayerId)) {
 			return std::nullopt;
 		}
 		entities.push_back({
-			.entityId = readU32(bytes, recordOffset),
-			.entityType = static_cast<EntityType>(entityType),
-			.ownerPlayerId = ownerPlayerId,
-			.spriteId = spriteId,
-			.health = bytes[recordOffset + 7],
-			.x = decodePosition(bytes, recordOffset + 8),
-			.y = decodePosition(bytes, recordOffset + 12),
+			readU32(bytes, recordOffset),
+			static_cast<EntityType>(entityType),
+			ownerPlayerId,
+			spriteId,
+			bytes[recordOffset + 7],
+			decodePosition(bytes, recordOffset + 8),
+			decodePosition(bytes, recordOffset + 12),
 		});
 	}
 	return entities;
@@ -203,10 +203,10 @@ void GameClient::handleSnapshot(const std::vector<std::uint8_t>& bytes)
 		return;
 	}
 	_worldSnapshot = WorldSnapshot{
-		.tick = tick,
-		.connectedMask = bytes[HEADER_SIZE + 8],
-		.aliveMask = bytes[HEADER_SIZE + 9],
-		.entities = std::move(*entities),
+		tick,
+		bytes[HEADER_SIZE + 8],
+		bytes[HEADER_SIZE + 9],
+		std::move(*entities),
 	};
 }
 
