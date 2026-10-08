@@ -13,11 +13,12 @@
 
 namespace rtype::ecs {
 
+//type of entity to handle collision detection with tag/mask
 namespace layer {
-	constexpr std::uint32_t PLAYER = 1 << 0;
-	constexpr std::uint32_t ENEMY = 1 << 1;
-	constexpr std::uint32_t PLAYER_PROJECTILE = 1 << 2;
-	constexpr std::uint32_t ENEMY_PROJECTILE = 1 << 3;
+	constexpr std::uint32_t PLAYER = 0b0001;
+	constexpr std::uint32_t ENEMY = 0b0010;
+	constexpr std::uint32_t PLAYER_PROJECTILE = 0b0100;
+	constexpr std::uint32_t ENEMY_PROJECTILE = 0b1000;
 }
 
 struct Replicated {

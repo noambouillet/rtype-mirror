@@ -28,18 +28,15 @@ class GameServer {
 	static constexpr auto SNAPSHOT_INTERVAL = std::chrono::milliseconds(50);
 	static constexpr auto INPUT_TIMEOUT = std::chrono::milliseconds(250);
 	static constexpr auto SESSION_TIMEOUT = std::chrono::seconds(5);
-	static constexpr std::size_t MAX_PLAYERS = GameWorld::MAX_PLAYERS;
 	static constexpr std::size_t SNAPSHOT_HEADER_SIZE = 11;
 	static constexpr std::size_t ENTITY_RECORD_SIZE = 16;
 
 	using Clock = std::chrono::steady_clock;
 
 public:
-	using TickInput = GameWorld::Input;
-
 	explicit GameServer(std::uint16_t port);
 	void run(const volatile std::sig_atomic_t& running);
-	TickInput tick();
+	GameWorld::Input tick();
 
 private:
 	void handleDatagram(const network::Datagram& datagram, Clock::time_point now);
@@ -54,12 +51,12 @@ private:
 	void removeSession(std::uint8_t playerId, std::uint8_t reason);
 	void sendTo(Session& session, network::PacketType type, const std::vector<std::uint8_t>& payload);
 	void broadcast(network::PacketType type, const std::vector<std::uint8_t>& payload);
-	TickInput collectInput(Clock::time_point now);
-	std::vector<std::uint8_t> buildSnapshot(const TickInput& input);
+	GameWorld::Input collectInput(Clock::time_point now);
+	std::vector<std::uint8_t> buildSnapshot(const GameWorld::Input& input);
 
 	network::UdpServer _network;
 	GameWorld _world;
-	std::array<std::optional<Session>, MAX_PLAYERS> _sessions;
+	std::array<std::optional<Session>, GameWorld::MAX_PLAYERS> _sessions;
 	std::unordered_set<std::uint32_t> _issuedSessionIds;
 	std::uint64_t _tick;
 };

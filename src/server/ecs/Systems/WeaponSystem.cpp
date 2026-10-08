@@ -26,12 +26,12 @@ Signature WeaponSystem::signature(Coordinator& coordinator)
 }
 
 /// Ticks each cooldown and fires for the weapons that are requested to and ready.
-void WeaponSystem::update(Coordinator& coordinator, float dt)
+void WeaponSystem::update(Coordinator& coordinator, float elapsedTime)
 {
 	for (const Entity& e : entities) {
 		auto& weapon = coordinator.getComponent<Weapon>(e);
 
-		weapon.remaining = std::max(0.0f, weapon.remaining - dt);
+		weapon.remaining = std::max(0.0f, weapon.remaining - elapsedTime);
 		if (!weapon.firing || weapon.remaining > 0.0f || !prefabs::canSpawnReplicated(coordinator))
 			continue;
 		weapon.remaining = weapon.cooldown;

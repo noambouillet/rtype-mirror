@@ -85,7 +85,7 @@ void GameServer::run(const volatile std::sig_atomic_t& running)
 	const float deltaTime = std::chrono::duration<float>(TICK_DURATION).count();
 
 	while (running != 0) {
-		const TickInput input = tick();
+		const GameWorld::Input input = tick();
 		_world.update(input, deltaTime);
 		snapshotElapsed += TICK_DURATION;
 		if (snapshotElapsed >= SNAPSHOT_INTERVAL || input.connectedMask != previousConnectedMask) {
@@ -102,7 +102,7 @@ void GameServer::run(const volatile std::sig_atomic_t& running)
 	}
 }
 
-/// Appends one 16-byte entity record as documented in the RFC.
+/// Appends one 16-byte entity record to the snapshot payload, multi-byte fields in big-endian:
 static void appendEntityRecord(std::vector<std::uint8_t>& payload, const GameWorld::EntityState& entity)
 {
 	network::appendU32(payload, entity.id);
@@ -115,7 +115,7 @@ static void appendEntityRecord(std::vector<std::uint8_t>& payload, const GameWor
 }
 
 /// Builds the documented full snapshot payload from the world's replicated entities.
-std::vector<std::uint8_t> GameServer::buildSnapshot(const TickInput& input)
+std::vector<std::uint8_t> GameServer::buildSnapshot(const GameWorld::Input& input)
 {
 	const auto entities = _world.replicatedEntities();
 	std::vector<std::uint8_t> payload;
@@ -131,7 +131,7 @@ std::vector<std::uint8_t> GameServer::buildSnapshot(const TickInput& input)
 }
 
 /// Processes queued packets and returns the current inputs for the game world.
-GameServer::TickInput GameServer::tick()
+GameWorld::Input GameServer::tick()
 {
 	_tick++;
 	const auto now = Clock::now();
@@ -313,9 +313,9 @@ void GameServer::broadcast(network::PacketType type, const std::vector<std::uint
 }
 
 /// Expires silent sessions and returns fresh button states for this tick.
-GameServer::TickInput GameServer::collectInput(Clock::time_point now)
+GameWorld::Input GameServer::collectInput(Clock::time_point now)
 {
-	TickInput input{{}, 0};
+	GameWorld::Input input{{}, 0};
 	for (std::size_t index = 0; index < _sessions.size(); index++) {
 		auto& session = _sessions[index];
 		if (!session) {

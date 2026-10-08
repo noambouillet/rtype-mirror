@@ -27,15 +27,16 @@ Signature EnemySpawnSystem::signature(Coordinator& coordinator)
 	return sig;
 }
 
-/// Counts each spawner down and sends a wave when it reaches zero; does nothing while `active` is false.
-void EnemySpawnSystem::update(Coordinator& coordinator, float dt, bool active)
+/// Counts each spawner down and sends a wave when it reaches zero.
+/// `active` is true when at least one player is connected
+void EnemySpawnSystem::update(Coordinator& coordinator, float elapsedTime, bool active)
 {
 	if (!active)
 		return;
 	for (const Entity& e : entities) {
 		auto& spawner = coordinator.getComponent<WaveSpawner>(e);
 
-		spawner.timer -= dt;
+		spawner.timer -= elapsedTime;
 		if (spawner.timer > 0.0f)
 			continue;
 		spawner.timer += spawner.interval;

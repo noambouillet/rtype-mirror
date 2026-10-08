@@ -175,13 +175,13 @@ std::optional<std::vector<WorldEntity>> GameClient::parseEntities(const std::vec
 			return std::nullopt;
 		}
 		entities.push_back({
-			readU32(bytes, recordOffset),
-			static_cast<EntityType>(entityType),
-			ownerPlayerId,
-			spriteId,
-			bytes[recordOffset + 7],
-			decodePosition(bytes, recordOffset + 8),
-			decodePosition(bytes, recordOffset + 12),
+			.entityId = readU32(bytes, recordOffset),
+			.entityType = static_cast<EntityType>(entityType),
+			.ownerPlayerId = ownerPlayerId,
+			.spriteId = spriteId,
+			.health = bytes[recordOffset + 7],
+			.x = decodePosition(bytes, recordOffset + 8),
+			.y = decodePosition(bytes, recordOffset + 12),
 		});
 	}
 	return entities;
@@ -203,10 +203,10 @@ void GameClient::handleSnapshot(const std::vector<std::uint8_t>& bytes)
 		return;
 	}
 	_worldSnapshot = WorldSnapshot{
-		tick,
-		bytes[HEADER_SIZE + 8],
-		bytes[HEADER_SIZE + 9],
-		std::move(*entities),
+		.tick = tick,
+		.connectedMask = bytes[HEADER_SIZE + 8],
+		.aliveMask = bytes[HEADER_SIZE + 9],
+		.entities = std::move(*entities),
 	};
 }
 
