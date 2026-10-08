@@ -169,8 +169,8 @@ std::optional<std::vector<WorldEntity>> GameClient::parseEntities(const std::vec
 		const std::uint8_t spriteId = bytes[recordOffset + 6];
 		const EntityType entityType = static_cast<EntityType>(rawType);
 
-		if (entityType < EntityType::Player || entityType > EntityType::Bonus ||
-			((entityType == EntityType::Player || entityType == EntityType::Laser) ? ownerPlayerId > 3 : ownerPlayerId != 255) ||
+		if (entityType < EntityType::Player || entityType > EntityType::EnemyProjectile ||
+			((entityType == EntityType::Player || entityType == EntityType::PlayerProjectile) ? ownerPlayerId > 3 : ownerPlayerId != NO_OWNER) ||
 			(entityType == EntityType::Player && spriteId != ownerPlayerId)) {
 			return std::nullopt;
 		}

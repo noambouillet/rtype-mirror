@@ -21,4 +21,10 @@ static constexpr std::array<sf::IntRect, 4> PLAYER_SHIPS = {
 	sf::IntRect{{1, 18}, {32, 16}},  // Magenta
 };
 
+static constexpr std::string_view ENEMY_SHEET = "r-typesheet5.gif";
+static constexpr sf::IntRect ENEMY_BYDO = {{0, 0}, {33, 36}};
+
+static constexpr std::string_view SHOT_SHEET = "r-typesheet1.gif";
+static constexpr sf::IntRect PLAYER_SHOT = {{249, 105}, {16, 8}};
+
 }

@@ -20,7 +20,14 @@ static constexpr std::size_t MAX_DATAGRAM_SIZE = 1200;
 static constexpr std::array<std::uint8_t, 4> MAGIC{'R', 'T', 'Y', 'P'};
 static constexpr std::uint8_t VERSION = 1;
 static constexpr std::uint32_t HALF_SEQUENCE = 2147483648;
+static constexpr std::uint8_t BUTTON_UP = 0x01;
+static constexpr std::uint8_t BUTTON_DOWN = 0x02;
+static constexpr std::uint8_t BUTTON_LEFT = 0x04;
+static constexpr std::uint8_t BUTTON_RIGHT = 0x08;
+static constexpr std::uint8_t BUTTON_FIRE = 0x10;
 static constexpr std::uint8_t MAX_BUTTON_STATE = 0b00011111;
+static constexpr std::size_t MAX_SNAPSHOT_ENTITIES = 64;
+static constexpr std::uint8_t NO_OWNER = 255;
 
 enum class PacketType : std::uint8_t {
 	JoinRequest = 0x01,
@@ -40,6 +47,14 @@ enum class ErrorCode : std::uint8_t {
 	WrongDirection = 4,
 	InvalidSession = 5,
 	InvalidField = 6,
+};
+
+/// Entity kinds carried in snapshot records (RFC "Entity record").
+enum class EntityType : std::uint8_t {
+	Player = 1,
+	Enemy = 2,
+	PlayerProjectile = 3,
+	EnemyProjectile = 4,
 };
 
 struct Header {
