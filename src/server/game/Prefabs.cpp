@@ -38,7 +38,7 @@ ecs::Entity createPlayer(ecs::Coordinator& coordinator, std::uint8_t playerId)
 	coordinator.addComponent(entity, ecs::PlayerControl{playerId, config::PLAYER_SPEED});
 	coordinator.addComponent(entity, ecs::Weapon{config::FIRE_COOLDOWN, 0.0f, false});
 	coordinator.addComponent(entity, centredCollider(config::PLAYER_WIDTH, config::PLAYER_HEIGHT,
-		ecs::layer::PLAYER, ecs::layer::ENEMY | ecs::layer::ENEMY_PROJECTILE));
+										 ecs::layer::PLAYER, ecs::layer::ENEMY | ecs::layer::ENEMY_PROJECTILE));
 	coordinator.addComponent(entity, ecs::Replicated{network::EntityType::Player, playerId, playerId});
 	return entity;
 }
@@ -53,7 +53,7 @@ ecs::Entity createPlayerProjectile(ecs::Coordinator& coordinator, std::uint8_t p
 	coordinator.addComponent(entity, ecs::Velocity{config::PROJECTILE_SPEED, 0.0f});
 	coordinator.addComponent(entity, ecs::Damage{config::PROJECTILE_DAMAGE});
 	coordinator.addComponent(entity, centredCollider(config::PROJECTILE_WIDTH, config::PROJECTILE_HEIGHT,
-		ecs::layer::PLAYER_PROJECTILE, ecs::layer::ENEMY));
+										 ecs::layer::PLAYER_PROJECTILE, ecs::layer::ENEMY));
 	coordinator.addComponent(entity, ecs::DestroyOnHit{});
 	coordinator.addComponent(entity, ecs::DestroyOffscreen{});
 	coordinator.addComponent(entity, ecs::Replicated{network::EntityType::PlayerProjectile, playerId, 0});
@@ -70,7 +70,7 @@ ecs::Entity createEnemy(ecs::Coordinator& coordinator, float y)
 	coordinator.addComponent(entity, ecs::Health{config::ENEMY_HEALTH, config::ENEMY_HEALTH});
 	coordinator.addComponent(entity, ecs::Damage{config::ENEMY_CONTACT_DAMAGE});
 	coordinator.addComponent(entity, centredCollider(config::ENEMY_WIDTH, config::ENEMY_HEIGHT,
-		ecs::layer::ENEMY, ecs::layer::PLAYER | ecs::layer::PLAYER_PROJECTILE));
+										 ecs::layer::ENEMY, ecs::layer::PLAYER | ecs::layer::PLAYER_PROJECTILE));
 	coordinator.addComponent(entity, ecs::DestroyOffscreen{});
 	coordinator.addComponent(entity, ecs::Replicated{network::EntityType::Enemy, network::NO_OWNER, 0});
 	return entity;
