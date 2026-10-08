@@ -47,7 +47,15 @@ add_executable(r-type_server
     src/server/main.cpp
     src/server/GameServer.cpp
     src/server/Session.cpp
+    src/server/game/GameWorld.cpp
+    src/server/game/Prefabs.cpp
     src/server/network/UdpServer.cpp
+    src/server/ecs/Systems/EnemySpawnSystem.cpp
+    src/server/ecs/Systems/HitSystem.cpp
+    src/server/ecs/Systems/OffscreenSystem.cpp
+    src/server/ecs/Systems/PlayerControlSystem.cpp
+    src/server/ecs/Systems/ReplicationSystem.cpp
+    src/server/ecs/Systems/WeaponSystem.cpp
 )
 
 target_link_libraries(r-type_server PRIVATE rtype_protocol rtype_logger rtype_engine asio::asio Threads::Threads)

@@ -136,11 +136,13 @@ Up + Right + Fire is `00011001` (`0x19`). The server retains the latest valid
 input sequence and button state for each session. It discards duplicate or
 older input sequences. Any valid in-session packet updates the session's
 last-heard time, even if its input sequence is old. The server applies movement
-from the current input; shooting and other gameplay actions are not implemented.
+and firing from the current input; a held Fire button shoots at most once
+every 0.25 seconds.
 
 `GameServer::tick()` returns `TickInput` with a four-entry `buttons` array and
-a `connectedMask`. `GameServer::run()` applies those inputs to temporary player
-entities and broadcasts world snapshots. No separate input queue or command
+a `connectedMask`. `GameServer::run()` passes those inputs to `GameWorld`, which
+owns the ECS and the gameplay rules, and broadcasts world snapshots built from
+its replicated entities. No separate input queue or command
 broadcast is implemented.
 
 ## Packet validation and errors
