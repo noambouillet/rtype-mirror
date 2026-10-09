@@ -108,12 +108,25 @@ On windows, run the following:
 cmake -S . -B build -DCMAKE_TOOLCHAIN_FILE="$PWD/vcpkg/scripts/buildsystems/vcpkg.cmake"
 ```
 
+To cross-compile the Windows executables from Linux with MinGW and Ninja, use the project's MinGW toolchain:
+
+```bash
+cmake -S . -B build-windows -G Ninja \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DCMAKE_TOOLCHAIN_FILE="$PWD/vcpkg/scripts/buildsystems/vcpkg.cmake" \
+    -DVCPKG_TARGET_TRIPLET=x64-mingw-dynamic \
+    -DVCPKG_CHAINLOAD_TOOLCHAIN_FILE="$PWD/mingw-toolchain.cmake"
+cmake --build build-windows --parallel
+```
+
+Both Windows executables define `_WIN32_WINNT=0x0601` for Asio, matching its Windows 7 default when the version is unspecified.
+
 **4. Build the project**
 Once the CMake generation is complete, start the compilation:
 ```bash
 cmake --build build
 ```
-The server executable is `build/r-type_server` on Linux and `build/Debug/r-type_server.exe` with the default Visual Studio generator on Windows. The client target will be available when its source tree is added. To install its SFML dependency, configure with `-DVCPKG_MANIFEST_FEATURES=client`.
+The server and client executables are `build/r-type_server` and `build/r-type_client` on Linux, or `build/Debug/r-type_server.exe` and `build/Debug/r-type_client.exe` with the default Visual Studio generator on Windows. The MinGW cross-build places both `.exe` files in `build-windows/`.
 
 **5. Run and verify the server**
 
@@ -123,7 +136,7 @@ The server listens on UDP port 6767 by default. Pass a different port as its onl
 ./build/r-type_server 6767
 ```
 
-On Windows, run `build\Debug\r-type_server.exe 6767` (or use the output path for your chosen CMake generator). Stop it with Ctrl+C. The server has no graphical interface. It currently accepts joins, disconnects, and input commands, and sends protocol errors and departure notices. Its fixed tick does not run gameplay or send snapshots; that requires the planned ECS integration. Clients use the binary protocol in [RFC.md](RFC.md).
+On Windows, run `build\Debug\r-type_server.exe 6767` (or use the output path for your chosen CMake generator). Stop it with Ctrl+C. The server has no graphical interface. It handles sessions and inputs, advances the game world at fixed ticks, and sends world snapshots. Clients use the binary protocol in [RFC.md](RFC.md).
 
 The UDP smoke test requires Python 3 and local UDP socket access:
 
