@@ -43,3 +43,51 @@ jobs:
 
       - name: Build Project
         run: cmake --build build
+
+  build-windows:
+    runs-on: [self-hosted, linux, x64]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install MinGW
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            mingw-w64 cmake ninja-build \
+            build-essential pkg-config \
+            curl zip unzip tar
+
+      - name: Create MinGW vcpkg archives directory
+        run: mkdir -p "${{ github.workspace }}/.vcpkg-archives-windows"
+
+      - name: Set up MinGW vcpkg binary cache
+        run: echo "VCPKG_BINARY_SOURCES=clear;files,${{ github.workspace }}/.vcpkg-archives-windows,readwrite" >> "$GITHUB_ENV"
+
+      - name: Cache MinGW vcpkg packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            ${{ github.workspace }}/.vcpkg-archives-windows
+            ${{ github.workspace }}/build-windows/vcpkg_installed
+          key: ${{ runner.os }}-mingw-vcpkg-${{ hashFiles('vcpkg.json', 'mingw-toolchain.cmake') }}
+          restore-keys: |
+            ${{ runner.os }}-mingw-vcpkg-
+
+      - name: Bootstrap vcpkg
+        run: ./vcpkg/bootstrap-vcpkg.sh
+
+      - name: Configure Windows build
+        run: |
+          cmake -S . -B build-windows \
+            -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_TOOLCHAIN_FILE="$PWD/vcpkg/scripts/buildsystems/vcpkg.cmake" \
+            -DVCPKG_TARGET_TRIPLET=x64-mingw-dynamic \
+            -DVCPKG_CHAINLOAD_TOOLCHAIN_FILE="$PWD/mingw-toolchain.cmake"
+
+      - name: Build Windows executable
+        run: cmake --build build-windows --parallel
