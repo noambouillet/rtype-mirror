@@ -45,7 +45,7 @@ jobs:
         run: cmake --build build
 
   build-windows:
-    runs-on: [self-hosted, linux, x64]
+    runs-on: self-hosted
 
     steps:
       - name: Checkout repository
