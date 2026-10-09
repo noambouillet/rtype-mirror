@@ -95,13 +95,13 @@ void GameWorld::runSystems(const Input& input, float deltaTime, WorldEventCollec
 	_coordinator.getSystem<ecs::MovementSystem>().update(_coordinator, deltaTime);
 	_coordinator.getSystem<ecs::CollisionSystem>().update(_coordinator);
 	const std::vector<ecs::CollisionPair>& collisions = _coordinator.getSystem<ecs::CollisionSystem>().collisions();
-	const std::vector<ecs::HealthChange> changes = _coordinator.getSystem<ecs::DamageSystem>().update(_coordinator, collisions);
+	const std::vector<ecs::CollisionPair> accepted = _coordinator.getSystem<ecs::HitSystem>().update(_coordinator, collisions);
+	const std::vector<ecs::HealthChange> changes = _coordinator.getSystem<ecs::DamageSystem>().update(_coordinator, accepted);
 	for (const ecs::HealthChange& change : changes) {
 		if (change.remainingHealth > 0) {
 			events.recordDamage(_coordinator, change.entity);
 		}
 	}
-	_coordinator.getSystem<ecs::HitSystem>().update(_coordinator, collisions);
 	_coordinator.getSystem<ecs::OffscreenSystem>().update(_coordinator, config::WORLD_WIDTH, config::WORLD_HEIGHT, config::OFFSCREEN_MARGIN);
 	for (const ecs::Entity& removed : _coordinator.getSystem<ecs::DestroySystem>().entities) {
 		events.recordRemoval(_coordinator, removed);
