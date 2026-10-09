@@ -21,20 +21,29 @@ Signature HitSystem::signature(Coordinator& coordinator)
 	return sig;
 }
 
-/// Marks both sides of each pair, keeping only those that carry `DestroyOnHit`.
-void HitSystem::update(Coordinator& coordinator, const std::vector<CollisionPair>& collisions)
+/// Keeps only the first collision for each entity destroyed on hit.
+std::vector<CollisionPair> HitSystem::update(Coordinator& coordinator, const std::vector<CollisionPair>& collisions)
 {
+	std::vector<CollisionPair> accepted;
+	accepted.reserve(collisions.size());
 	for (const auto& [a, b] : collisions) {
+		if ((entities.contains(a) && coordinator.hasComponent<Destroy>(a)) ||
+			(entities.contains(b) && coordinator.hasComponent<Destroy>(b))) {
+			continue;
+		}
+		accepted.push_back({a, b});
 		markHit(coordinator, a);
 		markHit(coordinator, b);
 	}
+	return accepted;
 }
 
 /// Adds `Destroy` to `entity` when this system tracks it and it is not already marked.
 void HitSystem::markHit(Coordinator& coordinator, Entity entity)
 {
-	if (entities.contains(entity) && !coordinator.hasComponent<Destroy>(entity))
+	if (entities.contains(entity) && !coordinator.hasComponent<Destroy>(entity)) {
 		coordinator.addComponent(entity, Destroy{});
+	}
 }
 
 }
