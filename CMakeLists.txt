@@ -43,19 +43,25 @@ target_include_directories(rtype_engine PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/src/ECS/System/Systems
 )
 
-add_executable(r-type_server
-    src/server/main.cpp
-    src/server/GameServer.cpp
-    src/server/Session.cpp
+set(RTYPE_GAME_SOURCES
     src/server/game/GameWorld.cpp
+    src/server/game/WorldEvent.cpp
+    src/server/game/WorldEventCollector.cpp
     src/server/game/Prefabs.cpp
-    src/server/network/UdpServer.cpp
     src/server/ecs/Systems/EnemySpawnSystem.cpp
     src/server/ecs/Systems/HitSystem.cpp
     src/server/ecs/Systems/OffscreenSystem.cpp
     src/server/ecs/Systems/PlayerControlSystem.cpp
     src/server/ecs/Systems/ReplicationSystem.cpp
     src/server/ecs/Systems/WeaponSystem.cpp
+)
+
+add_executable(r-type_server
+    src/server/main.cpp
+    src/server/GameServer.cpp
+    src/server/Session.cpp
+    src/server/network/UdpServer.cpp
+    ${RTYPE_GAME_SOURCES}
 )
 
 target_link_libraries(r-type_server PRIVATE rtype_protocol rtype_logger rtype_engine asio::asio Threads::Threads)

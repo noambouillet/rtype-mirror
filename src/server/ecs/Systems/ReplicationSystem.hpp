@@ -8,6 +8,7 @@
 #pragma once
 
 #include <cstdint>
+#include <optional>
 #include <vector>
 
 #include "Coordinator.hpp"
@@ -29,6 +30,7 @@ struct ReplicatedState {
 class ReplicationSystem : public System {
 public:
 	Signature signature(Coordinator& coordinator);
+	std::optional<ReplicatedState> capture(Coordinator& coordinator, Entity entity) const;
 	std::vector<ReplicatedState> collect(Coordinator& coordinator);
 };
 

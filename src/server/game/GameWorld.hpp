@@ -16,6 +16,8 @@
 #include "Coordinator.hpp"
 #include "server/ecs/Systems/ReplicationSystem.hpp"
 #include "server/game/GameConfig.hpp"
+#include "server/game/WorldEvent.hpp"
+#include "server/game/WorldEventCollector.hpp"
 
 namespace rtype {
 
@@ -31,15 +33,15 @@ public:
 	using EntityState = ecs::ReplicatedState;
 
 	GameWorld();
-	void update(const Input& input, float deltaTime);
+	std::vector<WorldEvent> update(const Input& input, float deltaTime);
 	[[nodiscard]] std::uint8_t aliveMask() const;
 	[[nodiscard]] std::vector<EntityState> replicatedEntities();
 
 private:
 	void registerComponents();
 	void registerSystems();
-	void syncPlayerEntities(const Input& input);
-	void runSystems(const Input& input, float deltaTime);
+	void syncPlayerEntities(const Input& input, WorldEventCollector& events);
+	void runSystems(const Input& input, float deltaTime, WorldEventCollector& events);
 
 	ecs::Coordinator _coordinator;
 	std::array<std::optional<ecs::Entity>, MAX_PLAYERS> _playerEntities;
