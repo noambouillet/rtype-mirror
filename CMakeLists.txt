@@ -75,6 +75,7 @@ add_executable(r-type_client
     src/client/app/ClientApp.cpp
     src/client/app/ClientOptions.cpp
     src/client/SFML/AssetManager.cpp
+    src/client/SFML/LocalFirePredictor.cpp
     src/client/SFML/Sfml.cpp
     src/client/network/GameClient.cpp
     src/client/network/UdpClient.cpp

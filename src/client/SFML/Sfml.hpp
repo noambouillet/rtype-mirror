@@ -73,6 +73,7 @@ public:
 	bool isOpen() const;
 	void handleEvent();
 	std::uint8_t buttons() const;
+	void predictLocalFire(std::uint8_t buttons, std::optional<std::uint8_t> localPlayerId, const std::optional<network::WorldSnapshot>& snapshot);
 	void displayWindow(const std::optional<network::WorldSnapshot>& snapshot, const std::vector<network::WorldEventNotice>& events);
 };
 

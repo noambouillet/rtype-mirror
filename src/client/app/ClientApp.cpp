@@ -12,6 +12,7 @@
 #include <filesystem>
 #include <iostream>
 #include <memory>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -78,6 +79,8 @@ static bool updateFrame(Sfml& window, network::GameClient& client, Logger& logge
 		return true;
 	}
 	const std::uint8_t buttons = window.buttons();
+	const std::optional<std::uint8_t> localPlayerId = client.status() == network::ClientStatus::Connected ? std::optional<std::uint8_t>(client.playerId()) : std::nullopt;
+	window.predictLocalFire(buttons, localPlayerId, client.worldSnapshot());
 	client.tick(buttons);
 	reportNotices(client, logger);
 	if (client.status() != previous) {
