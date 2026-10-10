@@ -26,12 +26,15 @@ private:
 	static constexpr float MAX_FRAME_SECONDS = 0.1;
 	static constexpr std::uint32_t WINDOW_WIDTH = 1280;
 	static constexpr std::uint32_t WINDOW_HEIGHT = 720;
+	static constexpr float SHIP_SCALE = 3.0F;  // player ships and enemies; the server colliders match this scale
+	static constexpr float SHOT_SCALE = 2.0F;
 
 	std::uint8_t keyboardButtons() const;
 	std::uint8_t joystickButtons() const;
 	void drawPlayer(const network::WorldEntity& entity);
 	void drawPlayerShot(const network::WorldEntity& entity);
 	void drawEnemy(const network::WorldEntity& entity);
+	void drawEnemyShot(const network::WorldEntity& entity);
 
 	sf::RenderWindow _window;
 	AssetManager& _assets;
