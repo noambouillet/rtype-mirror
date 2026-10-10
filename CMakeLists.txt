@@ -51,10 +51,14 @@ add_executable(r-type_server
     src/server/game/Prefabs.cpp
     src/server/network/UdpServer.cpp
     src/server/ecs/Systems/EnemySpawnSystem.cpp
+    src/server/ecs/Systems/FormationSystem.cpp
     src/server/ecs/Systems/HitSystem.cpp
+    src/server/ecs/Systems/HoverMotionSystem.cpp
     src/server/ecs/Systems/OffscreenSystem.cpp
+    src/server/ecs/Systems/PathFollowSystem.cpp
     src/server/ecs/Systems/PlayerControlSystem.cpp
     src/server/ecs/Systems/ReplicationSystem.cpp
+    src/server/ecs/Systems/SineMotionSystem.cpp
     src/server/ecs/Systems/WeaponSystem.cpp
 )
 
