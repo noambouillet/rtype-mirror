@@ -19,7 +19,8 @@ Sfml::Sfml(AssetManager& assets)
 	: _window(sf::VideoMode({WINDOW_WIDTH, WINDOW_HEIGHT}), "R-Type"),
 	  _assets(assets),
 	  _joystickId(0),
-	  _lastFrame(std::chrono::steady_clock::now())
+	  _lastFrame(std::chrono::steady_clock::now()),
+	  _background(assets, _window)
 {
 	_window.setFramerateLimit(60);
 }
@@ -48,6 +49,15 @@ void Sfml::handleEvent()
 std::uint8_t Sfml::buttons() const
 {
 	return keyboardButtons() | joystickButtons();
+}
+
+/// Updates the scrolling background based on the elapsed time since the last frame.
+void Sfml::updateBackground()
+{
+	const auto now = std::chrono::steady_clock::now();
+	const float elapsedTime = std::chrono::duration<float>(now - _lastFrame).count();
+	_background.update(elapsedTime);
+	_lastFrame = now;
 }
 
 /// Reads the keyboard's current input state.
@@ -136,10 +146,11 @@ void Sfml::drawEnemy(const network::WorldEntity& entity)
 	_window.draw(sprite);
 }
 
-/// Draws every entities from the snapshot, or a black screen if not yet connected
+/// Draws every entities from the snapshot, or the background if not yet connected
 void Sfml::displayWindow(const std::optional<network::WorldSnapshot>& snapshot)
 {
 	_window.clear(sf::Color::Black);
+	_background.draw(_window);
 	if (snapshot) {
 		for (const auto& entity : snapshot->entities) {
 			switch (entity.entityType) {

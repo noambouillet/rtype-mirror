@@ -12,6 +12,7 @@
 #include <cstdint>
 
 #include "AssetManager.hpp"
+#include "ScrollingBackground.hpp"
 
 namespace rtype {
 namespace network {
@@ -37,12 +38,14 @@ private:
 	AssetManager& _assets;
 	unsigned int _joystickId;
 	std::chrono::steady_clock::time_point _lastFrame;
+	ScrollingBackground _background;
 
 public:
 	explicit Sfml(AssetManager& assets);
 	bool isOpen() const;
 	void handleEvent();
 	std::uint8_t buttons() const;
+	void updateBackground();
 	void displayWindow(const std::optional<network::WorldSnapshot>& snapshot);
 };
 

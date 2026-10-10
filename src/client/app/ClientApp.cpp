@@ -85,6 +85,7 @@ static bool updateFrame(Sfml& window, network::GameClient& client, Logger& logge
 			return false;
 		}
 	}
+	window.updateBackground();
 	window.displayWindow(client.worldSnapshot());
 	return true;
 }
@@ -100,6 +101,7 @@ int runClient(const ClientOptions& options)
 	assets.preload(sprites::PLAYER_SHEET);
 	assets.preload(sprites::SHOT_SHEET);
 	assets.preload(sprites::ENEMY_SHEET);
+	assets.preload("background.png");
 	network::GameClient client(options.host, options.port);
 	Sfml window(assets);
 	auto previous = client.status();
