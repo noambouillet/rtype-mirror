@@ -20,7 +20,7 @@ private:
 	static constexpr std::string_view FALLBACK_FILE = "magenta-checkerboard-200px.png";
 	using TextureMap = std::unordered_map<std::filesystem::path, sf::Texture>;
 
-	const sf::Texture& loadTexture(const std::filesystem::path& name);
+	sf::Texture& loadTexture(const std::filesystem::path& name);
 
 	std::filesystem::path _root;
 	sf::Texture _fallbackTexture;
@@ -31,6 +31,7 @@ public:
 	AssetManager();
 	void preload(std::string_view name);
 	const sf::Texture& texture(std::string_view name);
+	void setRepeated(std::string_view name, bool repeated);
 	sf::Sprite sprite(std::string_view name, const sf::IntRect& area);
 };
 
