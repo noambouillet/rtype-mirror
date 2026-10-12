@@ -25,6 +25,49 @@ static constexpr std::string_view ENEMY_SHEET = "r-typesheet5.gif";
 static constexpr sf::IntRect ENEMY_BYDO = {{0, 0}, {33, 36}};
 
 static constexpr std::string_view SHOT_SHEET = "r-typesheet1.gif";
-static constexpr sf::IntRect PLAYER_SHOT = {{249, 105}, {16, 8}};
+static constexpr std::array<sf::IntRect, 4> PLAYER_SHOT_FRAMES = {
+	sf::IntRect{{232, 103}, {16, 12}},
+	sf::IntRect{{249, 103}, {16, 12}},
+	sf::IntRect{{267, 103}, {16, 12}},
+	sf::IntRect{{284, 103}, {16, 12}},
+};
+static constexpr std::array<sf::IntRect, 9> SHOT_BURST_FRAMES = {
+	sf::IntRect{{199, 83}, {16, 16}},
+	sf::IntRect{{215, 83}, {16, 16}},
+	sf::IntRect{{231, 83}, {16, 16}},
+	sf::IntRect{{247, 83}, {16, 16}},
+	sf::IntRect{{263, 83}, {16, 16}},
+	sf::IntRect{{279, 83}, {16, 16}},
+	sf::IntRect{{295, 83}, {16, 16}},
+	sf::IntRect{{311, 83}, {16, 16}},
+	sf::IntRect{{327, 83}, {16, 16}},
+};
+static constexpr std::array<sf::IntRect, 7> HIT_SPARK_FRAMES = {
+	sf::IntRect{{215, 83}, {16, 16}},
+	sf::IntRect{{231, 83}, {16, 16}},
+	sf::IntRect{{247, 83}, {16, 16}},
+	sf::IntRect{{263, 83}, {16, 16}},
+	sf::IntRect{{279, 83}, {16, 16}},
+	sf::IntRect{{295, 83}, {16, 16}},
+	sf::IntRect{{311, 83}, {16, 16}},
+};
+
+static constexpr std::string_view EXPLOSION_SHEET = "r-typesheet44.gif";
+static constexpr std::array<int, 12> MOB_EXPLOSION_X = {129, 162, 195, 228, 261, 294, 327, 360, 393, 426, 459, 492};
+static constexpr std::array<sf::IntRect, 12> MOB_EXPLOSION_FRAMES = [] {
+	std::array<sf::IntRect, 12> frames{};
+	for (std::size_t index = 0; index < frames.size(); index++) {
+		frames[index] = sf::IntRect{{MOB_EXPLOSION_X[index], 0}, {33, 33}};
+	}
+	return frames;
+}();
+static constexpr std::array<int, 10> PLAYER_EXPLOSION_X = {1, 66, 131, 196, 261, 327, 392, 457, 522, 587};
+static constexpr std::array<sf::IntRect, 10> PLAYER_EXPLOSION_FRAMES = [] {
+	std::array<sf::IntRect, 10> frames{};
+	for (std::size_t index = 0; index < frames.size(); index++) {
+		frames[index] = sf::IntRect{{PLAYER_EXPLOSION_X[index], 35}, {64, 64}};
+	}
+	return frames;
+}();
 
 }

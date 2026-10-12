@@ -12,7 +12,9 @@
 #include <filesystem>
 #include <iostream>
 #include <memory>
+#include <optional>
 #include <string>
+#include <vector>
 
 #include "client/SFML/Sfml.hpp"
 #include "client/SFML/SpriteRegions.hpp"
@@ -77,6 +79,8 @@ static bool updateFrame(Sfml& window, network::GameClient& client, Logger& logge
 		return true;
 	}
 	const std::uint8_t buttons = window.buttons();
+	const std::optional<std::uint8_t> localPlayerId = client.status() == network::ClientStatus::Connected ? std::optional<std::uint8_t>(client.playerId()) : std::nullopt;
+	window.predictLocalFire(buttons, localPlayerId, client.worldSnapshot());
 	client.tick(buttons);
 	reportNotices(client, logger);
 	if (client.status() != previous) {
@@ -85,7 +89,8 @@ static bool updateFrame(Sfml& window, network::GameClient& client, Logger& logge
 			return false;
 		}
 	}
-	window.displayWindow(client.worldSnapshot());
+	const std::vector<network::WorldEventNotice> events = client.takeEvents();
+	window.displayWindow(client.worldSnapshot(), events);
 	return true;
 }
 
@@ -100,6 +105,7 @@ int runClient(const ClientOptions& options)
 	assets.preload(sprites::PLAYER_SHEET);
 	assets.preload(sprites::SHOT_SHEET);
 	assets.preload(sprites::ENEMY_SHEET);
+	assets.preload(sprites::EXPLOSION_SHEET);
 	network::GameClient client(options.host, options.port);
 	Sfml window(assets);
 	auto previous = client.status();

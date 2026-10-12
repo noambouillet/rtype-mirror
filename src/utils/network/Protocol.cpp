@@ -22,6 +22,10 @@ static bool isKnownType(std::uint8_t type)
 		case PacketType::PlayerLeft:
 		case PacketType::PlayerInput:
 		case PacketType::WorldSnapshot:
+		case PacketType::EntitySpawn:
+		case PacketType::EntityDestroy:
+		case PacketType::EntityDamage:
+		case PacketType::PlayerDeath:
 		case PacketType::Error:
 			return true;
 	}
@@ -124,6 +128,25 @@ static bool validSessionNotice(const Header& header, const std::vector<std::uint
 		   bytes[HEADER_SIZE + 8] <= 3 && (bytes[HEADER_SIZE + 9] == 1 || bytes[HEADER_SIZE + 9] == 2);
 }
 
+/// Checks one entity record shared by snapshots and spawn events.
+static bool validEntityRecord(const std::vector<std::uint8_t>& bytes, std::size_t offset)
+{
+	const EntityType kind = static_cast<EntityType>(bytes[offset + 4]);
+	const std::uint8_t owner = bytes[offset + 5];
+	const std::uint8_t variant = bytes[offset + 6];
+	const std::uint8_t health = bytes[offset + 7];
+	if (kind < EntityType::Player || kind > EntityType::EnemyProjectile) {
+		return false;
+	}
+	if (kind == EntityType::Player) {
+		return owner <= 3 && variant == owner && health > 0;
+	}
+	if (kind == EntityType::PlayerProjectile) {
+		return owner <= 3 && health == 0;
+	}
+	return owner == NO_OWNER && (kind == EntityType::Enemy ? health > 0 : health == 0);
+}
+
 /// Checks the masks, record count, and unique IDs in a world snapshot.
 static bool validWorldSnapshot(const Header& header, const std::vector<std::uint8_t>& bytes)
 {
@@ -141,6 +164,9 @@ static bool validWorldSnapshot(const Header& header, const std::vector<std::uint
 	std::array<std::uint32_t, 64> entityIds{};
 	for (std::size_t index = 0; index < entityCount; index++) {
 		const std::size_t recordOffset = HEADER_SIZE + 11 + index * 16;
+		if (!validEntityRecord(bytes, recordOffset)) {
+			return false;
+		}
 		const std::uint32_t entityId = readU32(bytes, recordOffset);
 		for (std::size_t previous = 0; previous < index; previous++) {
 			if (entityIds[previous] == entityId) {
@@ -150,6 +176,28 @@ static bool validWorldSnapshot(const Header& header, const std::vector<std::uint
 		entityIds[index] = entityId;
 	}
 	return true;
+}
+
+/// Checks event sizes and values before the client reads their payloads.
+static bool validWorldEvent(const Header& header, const std::vector<std::uint8_t>& bytes)
+{
+	if (header.sequence == 0 || header.sessionId != 0 || header.payloadSize < 8 || readU64(bytes, HEADER_SIZE) == 0) {
+		return false;
+	}
+	const std::size_t offset = HEADER_SIZE + 8;
+	switch (header.type) {
+		case PacketType::EntitySpawn:
+			return header.payloadSize == 24 && validEntityRecord(bytes, offset);
+		case PacketType::EntityDestroy:
+			return header.payloadSize == 21 && bytes[offset + 4] >= static_cast<std::uint8_t>(EntityType::Enemy) &&
+				   bytes[offset + 4] <= static_cast<std::uint8_t>(EntityType::EnemyProjectile);
+		case PacketType::EntityDamage:
+			return header.payloadSize == 13 && bytes[offset + 4] > 0;
+		case PacketType::PlayerDeath:
+			return header.payloadSize == 21 && bytes[offset] <= 3;
+		default:
+			return false;
+	}
 }
 
 /// Checks the implemented protocol error fields.
@@ -171,6 +219,11 @@ static bool validServerPayload(const Header& header, const std::vector<std::uint
 			return validSessionNotice(header, bytes);
 		case PacketType::WorldSnapshot:
 			return validWorldSnapshot(header, bytes);
+		case PacketType::EntitySpawn:
+		case PacketType::EntityDestroy:
+		case PacketType::EntityDamage:
+		case PacketType::PlayerDeath:
+			return validWorldEvent(header, bytes);
 		case PacketType::Error:
 			return validErrorNotice(header, bytes);
 		default:

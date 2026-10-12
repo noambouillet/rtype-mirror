@@ -71,38 +71,56 @@ void GameWorld::registerSystems()
 	registerSystem<ecs::ReplicationSystem>(_coordinator);
 }
 
-/// Advances the world by one fixed tick: players join or leave, then every system runs.
-void GameWorld::update(const Input& input, float deltaTime)
+/// Advances one world tick and returns its gameplay events in simulation order.
+std::vector<WorldEvent> GameWorld::update(const Input& input, float deltaTime)
 {
-	syncPlayerEntities(input);
-	runSystems(input, deltaTime);
+	WorldEventCollector events;
+	syncPlayerEntities(input, events);
+	runSystems(input, deltaTime, events);
+	return events.take();
 }
 
-/// Runs the systems in dependency order; DestroySystem stays last so every system sees this tick's entities.
-void GameWorld::runSystems(const Input& input, float deltaTime)
+/// Runs systems in dependency order, recording changes before DestroySystem removes their components.
+void GameWorld::runSystems(const Input& input, float deltaTime, WorldEventCollector& events)
 {
 	_coordinator.getSystem<ecs::PlayerControlSystem>().update(_coordinator, input.buttons);
-	_coordinator.getSystem<ecs::WeaponSystem>().update(_coordinator, deltaTime);
-	_coordinator.getSystem<ecs::EnemySpawnSystem>().update(_coordinator, deltaTime, input.connectedMask != 0);
+	const std::vector<ecs::Entity> projectiles = _coordinator.getSystem<ecs::WeaponSystem>().update(_coordinator, deltaTime);
+	for (const ecs::Entity& projectile : projectiles) {
+		events.recordSpawn(_coordinator, projectile);
+	}
+	const std::vector<ecs::Entity> enemies = _coordinator.getSystem<ecs::EnemySpawnSystem>().update(_coordinator, deltaTime, input.connectedMask != 0);
+	for (const ecs::Entity& enemy : enemies) {
+		events.recordSpawn(_coordinator, enemy);
+	}
 	_coordinator.getSystem<ecs::MovementSystem>().update(_coordinator, deltaTime);
-	auto& collision = _coordinator.getSystem<ecs::CollisionSystem>();
-	collision.update(_coordinator);
-	_coordinator.getSystem<ecs::DamageSystem>().update(_coordinator, collision.collisions());
-	_coordinator.getSystem<ecs::HitSystem>().update(_coordinator, collision.collisions());
+	_coordinator.getSystem<ecs::CollisionSystem>().update(_coordinator);
+	const std::vector<ecs::CollisionPair>& collisions = _coordinator.getSystem<ecs::CollisionSystem>().collisions();
+	const std::vector<ecs::CollisionPair> accepted = _coordinator.getSystem<ecs::HitSystem>().update(_coordinator, collisions);
+	const std::vector<ecs::HealthChange> changes = _coordinator.getSystem<ecs::DamageSystem>().update(_coordinator, accepted);
+	for (const ecs::HealthChange& change : changes) {
+		if (change.remainingHealth > 0) {
+			events.recordDamage(_coordinator, change.entity);
+		}
+	}
 	_coordinator.getSystem<ecs::OffscreenSystem>().update(_coordinator, config::WORLD_WIDTH, config::WORLD_HEIGHT, config::OFFSCREEN_MARGIN);
+	for (const ecs::Entity& removed : _coordinator.getSystem<ecs::DestroySystem>().entities) {
+		events.recordRemoval(_coordinator, removed);
+	}
 	_coordinator.getSystem<ecs::DestroySystem>().update(_coordinator);
 }
 
-// Spawns a ship for each newly connected player and removes the ship of each player who left.
-// Currently, a dead player respawns when he disconnect/reconnect.
-void GameWorld::syncPlayerEntities(const Input& input)
+/// Synchronizes player ships with sessions and reports newly spawned ships.
+/// A disconnect removes its ship without reporting a gameplay death. Reconnecting respawns a dead player.
+void GameWorld::syncPlayerEntities(const Input& input, WorldEventCollector& events)
 {
 	for (std::size_t playerId = 0; playerId < MAX_PLAYERS; playerId++) {
-		const std::uint8_t playerMask = static_cast<std::uint8_t>(1 << playerId);
+		const auto playerMask = static_cast<std::uint8_t>(1 << playerId);
 		const bool connected = (input.connectedMask & playerMask) != 0;
 
 		if (connected && !_playerEntities[playerId]) {
-			_playerEntities[playerId] = prefabs::createPlayer(_coordinator, static_cast<std::uint8_t>(playerId));
+			const ecs::Entity player = prefabs::createPlayer(_coordinator, static_cast<std::uint8_t>(playerId));
+			_playerEntities[playerId] = player;
+			events.recordSpawn(_coordinator, player);
 		} else if (!connected && _playerEntities[playerId]) {
 			_coordinator.destroyEntity(*_playerEntities[playerId]);
 			_playerEntities[playerId].reset();

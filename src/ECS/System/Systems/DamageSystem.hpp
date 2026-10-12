@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include <optional>
 #include <vector>
 
 #include "CollisionSystem.hpp"
@@ -16,13 +17,18 @@
 
 namespace rtype::ecs {
 
+struct HealthChange {
+	Entity entity;
+	int remainingHealth;
+};
+
 class DamageSystem : public System {
 public:
 	Signature signature(Coordinator& coordinator);
-	void update(Coordinator& coordinator, const std::vector<CollisionPair>& collisions);
+	std::vector<HealthChange> update(Coordinator& coordinator, const std::vector<CollisionPair>& collisions);
 
 private:
-	void applyDamage(Coordinator& coordinator, Entity attacker, Entity target);
+	std::optional<HealthChange> applyDamage(Coordinator& coordinator, Entity attacker, Entity target);
 };
 
 }

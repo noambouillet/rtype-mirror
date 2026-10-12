@@ -26,8 +26,9 @@ Signature WeaponSystem::signature(Coordinator& coordinator)
 }
 
 /// Ticks each cooldown and fires for the weapons that are requested to and ready.
-void WeaponSystem::update(Coordinator& coordinator, float elapsedTime)
+std::vector<Entity> WeaponSystem::update(Coordinator& coordinator, float elapsedTime)
 {
+	std::vector<Entity> spawned;
 	for (const Entity& e : entities) {
 		auto& weapon = coordinator.getComponent<Weapon>(e);
 
@@ -35,17 +36,22 @@ void WeaponSystem::update(Coordinator& coordinator, float elapsedTime)
 		if (!weapon.firing || weapon.remaining > 0.0f || !prefabs::canSpawnReplicated(coordinator))
 			continue;
 		weapon.remaining = weapon.cooldown;
-		fire(coordinator, e);
+		if (const std::optional<Entity> projectile = fire(coordinator, e)) {
+			spawned.push_back(*projectile);
+		}
 	}
+	return spawned;
 }
 
 /// Spawns the projectile matching the shooter; only player ships carry a weapon for now.
-void WeaponSystem::fire(Coordinator& coordinator, Entity shooter)
+std::optional<Entity> WeaponSystem::fire(Coordinator& coordinator, Entity shooter)
 {
 	const Position origin = coordinator.getComponent<Position>(shooter);
 
-	if (coordinator.hasComponent<PlayerControl>(shooter))
-		prefabs::createPlayerProjectile(coordinator, coordinator.getComponent<PlayerControl>(shooter).playerId, origin);
+	if (coordinator.hasComponent<PlayerControl>(shooter)) {
+		return prefabs::createPlayerProjectile(coordinator, coordinator.getComponent<PlayerControl>(shooter).playerId, origin);
+	}
+	return std::nullopt;
 }
 
 }
