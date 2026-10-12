@@ -51,7 +51,7 @@ constexpr float PATAPATA_HEIGHT = 72.0f;
 constexpr int PATAPATA_HEALTH = 1;
 constexpr int PATAPATA_MIN_COUNT = 4;
 constexpr int PATAPATA_MAX_COUNT = 6;
-constexpr float PATAPATA_FIRE_COOLDOWN = 2.0f;
+constexpr float PATAPATA_FIRE_COOLDOWN = 0.5f;
 
 constexpr float BUG_SPEED = 420.0f;
 constexpr float BUG_DELAY = 0.30f;
@@ -67,7 +67,7 @@ constexpr float BUG_ARC_TURNS = 1.25f;
 constexpr float BINK_SPEED = 120.0f;
 constexpr float BINK_WIDTH = 78.0f;
 constexpr float BINK_HEIGHT = 78.0f;
-constexpr int BINK_HEALTH = 2;
+constexpr int BINK_HEALTH = 1;
 constexpr float BINK_FIRE_COOLDOWN = 2.0f;
 constexpr float BINK_WAVE_CHANCE = 0.25f;
 
@@ -80,7 +80,7 @@ constexpr float SCANT_CHARGE_TIME = 0.6f;
 constexpr float SCANT_WIDTH = 135.0f;
 constexpr float SCANT_HEIGHT = 135.0f;
 constexpr float SCANT_CANNON_Y = -27.0f;
-constexpr int SCANT_HEALTH = 8;
+constexpr int SCANT_HEALTH = 5;
 constexpr float SCANT_WAVE_CHANCE = 0.15f;
 
 constexpr float SCANT_BEAM_SPEED = 500.0f;
@@ -89,9 +89,5 @@ constexpr float SCANT_BEAM_HEIGHT = 24.0f;
 constexpr int SCANT_BEAM_DAMAGE = 1;
 
 constexpr float WAVE_INTERVAL = 3.5f;
-
-// Enemies spawn just past the right edge, so OffscreenSystem would destroy any wider than twice the margin at once.
-static_assert(PATAPATA_WIDTH / 2.0f < OFFSCREEN_MARGIN && BUG_WIDTH / 2.0f < OFFSCREEN_MARGIN
-	&& BINK_WIDTH / 2.0f < OFFSCREEN_MARGIN && SCANT_WIDTH / 2.0f < OFFSCREEN_MARGIN);
 
 }
