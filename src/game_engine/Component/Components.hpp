@@ -10,7 +10,7 @@
 #include <string>
 #include <vector>
 
-#include "GameEngine/Graphics/GraphicsBackend.hpp"
+#include "game_engine/Graphics/GraphicsBackend.hpp"
 
 namespace rtype::ecs {
 

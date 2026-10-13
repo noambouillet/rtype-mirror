@@ -10,8 +10,8 @@
 #include <string>
 
 #include "Coordinator.hpp"
-#include "GameEngine/Graphics/GraphicsBackend.hpp"
 #include "System.hpp"
+#include "game_engine/Graphics/GraphicsBackend.hpp"
 
 namespace rtype::ecs {
 

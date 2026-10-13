@@ -10,7 +10,7 @@
 #include <chrono>
 #include <cstdint>
 
-#include "GameEngine/Network/Transport.hpp"
+#include "game_engine/Network/Transport.hpp"
 
 namespace rtype {
 

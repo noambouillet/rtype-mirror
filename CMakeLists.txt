@@ -22,25 +22,26 @@ add_library(rtype_logger src/utils/Logger.cpp)
 target_include_directories(rtype_logger PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
 
 add_library(rtype_engine
-    src/ECS/Component/ComponentManager.cpp
-    src/ECS/Coordinator/Coordinator.cpp
-    src/ECS/Entity/Entity.cpp
-    src/ECS/Entity/EntityManager.cpp
-    src/ECS/System/SystemManager.cpp
-    src/ECS/System/Systems/MovementSystem.cpp
-    src/ECS/System/Systems/CollisionSystem.cpp
-    src/ECS/System/Systems/DamageSystem.cpp
-    src/ECS/System/Systems/DestroySystem.cpp
+    src/game_engine/Component/ComponentManager.cpp
+    src/game_engine/Coordinator/Coordinator.cpp
+    src/game_engine/Entity/Entity.cpp
+    src/game_engine/Entity/EntityManager.cpp
+    src/game_engine/System/SystemManager.cpp
+    src/game_engine/System/Systems/MovementSystem.cpp
+    src/game_engine/System/Systems/CollisionSystem.cpp
+    src/game_engine/System/Systems/DamageSystem.cpp
+    src/game_engine/System/Systems/DestroySystem.cpp
+    src/game_engine/System/Systems/RenderSystem.cpp
 )
 
 target_include_directories(rtype_engine PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/src
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/ECS
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/ECS/Component
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/ECS/Coordinator
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/ECS/Entity
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/ECS/System
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/ECS/System/Systems
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/game_engine
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/game_engine/Component
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/game_engine/Coordinator
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/game_engine/Entity
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/game_engine/System
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/game_engine/System/Systems
 )
 
 set(RTYPE_GAME_SOURCES

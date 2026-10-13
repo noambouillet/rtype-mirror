@@ -9,10 +9,9 @@
 
 #include <chrono>
 #include <csignal>
-#include <cstdint>
 
-#include "GameEngine/Network/Transport.hpp"
 #include "game/GameWorld.hpp"
+#include "game_engine/Network/Transport.hpp"
 #include "network/ServerNetworkService.hpp"
 
 namespace rtype {
