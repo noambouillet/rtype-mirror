@@ -65,7 +65,6 @@ struct ParsedHeader {
 ParsedHeader parseClientHeader(const std::vector<std::uint8_t>& bytes);
 std::optional<Header> parseServerHeader(const std::vector<std::uint8_t>& bytes);
 std::optional<ErrorCode> validateClientPayload(const Header& header, const std::vector<std::uint8_t>& bytes);
-std::uint8_t encodeEntityType(game::EntityType kind);
 std::optional<game::EntityType> decodeEntityType(std::uint8_t wireKind);
 std::vector<std::uint8_t> makePacket(PacketType type, std::uint32_t sequence,
 	std::uint32_t sessionId, const std::vector<std::uint8_t>& payload);

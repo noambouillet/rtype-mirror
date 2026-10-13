@@ -90,14 +90,10 @@ add_executable(r-type_client
     src/client/app/ClientApp.cpp
     src/client/app/ClientOptions.cpp
     src/client/SFML/AssetManager.cpp
-    src/client/SFML/ScrollingBackground.cpp
-    src/client/SFML/LocalFirePredictor.cpp
     src/client/SFML/Sfml.cpp
-    src/client/SFML/VisualEffects.cpp
-    src/client/network/GameClient.cpp
     src/client/network/UdpClient.cpp
 )
-target_link_libraries(r-type_client PRIVATE rtype_protocol rtype_logger
+target_link_libraries(r-type_client PRIVATE rtype_client_core rtype_logger
     asio::asio Threads::Threads SFML::Graphics SFML::Window SFML::System)
 if(WIN32)
     target_compile_definitions(r-type_client PRIVATE _WIN32_WINNT=0x0601)
