@@ -20,7 +20,7 @@ Sfml::Sfml(AssetManager& assets)
 	  _visualEffects(assets),
 	  _joystickId(0),
 	  _lastFrame(std::chrono::steady_clock::now()),
-	  _background(assets, _window)
+	  _background(assets, _window),
 	  _animationStart(std::chrono::steady_clock::now())
 {
 	_window.setFramerateLimit(60);
