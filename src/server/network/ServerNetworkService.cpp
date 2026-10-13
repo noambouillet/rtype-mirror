@@ -16,8 +16,12 @@
 
 #ifdef _WIN32
 
-#include <bcrypt.h>
+// clang-format off
+// Clang wants the windows header after the bcrypt one, but this doesnt compile.
+// So we put "clang-format off" to wrestle with clang's ignorance.
 #include <windows.h>
+#include <bcrypt.h>
+// clang-format on
 
 #else
 
