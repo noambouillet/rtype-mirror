@@ -47,7 +47,7 @@ private:
 	ComponentManager _componentsManager;
 	SystemManager _systemsManager;
 };
-}  // namespace rtype::ecs
+}
 
 #include "Component.tpp"
 #include "System.tpp"

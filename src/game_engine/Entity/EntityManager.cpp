@@ -105,4 +105,4 @@ std::size_t EntityManager::maxEntities() const
 	return _maxEntities;
 }
 
-}  // namespace rtype::ecs
+}

@@ -19,7 +19,7 @@ template <typename T>
 class ComponentArray : public IComponentArray {
 public:
 	explicit ComponentArray(std::size_t maxEntities);
-	~ComponentArray() = default;
+	~ComponentArray() override = default;
 	bool has(Entity e) const;
 	void insert(Entity e, T comp);
 	void remove(Entity e);
@@ -32,5 +32,5 @@ private:
 	std::vector<Entity> _dense;
 	std::vector<T> _data;
 };
-}  // namespace rtype::ecs
+}
 #include "ComponentArray.tpp"

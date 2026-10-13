@@ -42,5 +42,5 @@ private:
 	template <typename T>
 	std::shared_ptr<ComponentArray<T>> getArray();
 };
-}  // namespace rtype::ecs
+}
 #include "ComponentManager.tpp"

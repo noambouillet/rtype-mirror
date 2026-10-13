@@ -17,7 +17,7 @@ Coordinator::Coordinator(std::size_t maxEntities)
 {
 }
 
-/// Create a new entity. Throws if the maximum number of entities is reached.
+/// Creates a new entity. Throws if the maximum number of entities is reached.
 Entity Coordinator::createEntity()
 {
 	std::optional<Entity> newEntity = _entitiesManager.create();
@@ -42,4 +42,4 @@ bool Coordinator::isAlive(Entity e) const
 {
 	return _entitiesManager.isAlive(e);
 }
-}  // namespace rtype::ecs
+}

@@ -16,4 +16,4 @@ constexpr std::size_t MAX_COMPONENTS = 64;
 using ComponentType = std::uint8_t;
 using Signature = std::bitset<MAX_COMPONENTS>;
 
-}  // namespace rtype::ecs
+}

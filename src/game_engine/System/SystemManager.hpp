@@ -39,6 +39,6 @@ private:
 	std::unordered_map<std::type_index, std::unique_ptr<System>> _systems;
 };
 
-}  // namespace rtype::ecs
+}
 
 #include "SystemManager.tpp"

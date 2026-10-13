@@ -44,4 +44,4 @@ private:
 	std::queue<Entity::Index> _freeIndices;
 };
 
-}  // namespace rtype::ecs
+}

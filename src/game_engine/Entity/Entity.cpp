@@ -44,4 +44,4 @@ bool Entity::isNull() const
 	return _id == NULL_ID;
 }
 
-}  // namespace rtype::ecs
+}

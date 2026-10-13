@@ -20,13 +20,14 @@ Signature MovementSystem::signature(Coordinator& coordinator)
 }
 
 /// Applies each entity's velocity to its position for a frame of elapsedTime seconds.
-void MovementSystem::update(Coordinator& coordinator, float elapsedTime) {
-    for (const Entity& e : entities) {
-        auto& pos = coordinator.getComponent<Position>(e);
-        const auto& vel = coordinator.getComponent<Velocity>(e);
+void MovementSystem::update(Coordinator& coordinator, float elapsedTime)
+{
+	for (const Entity& e : entities) {
+		auto& pos = coordinator.getComponent<Position>(e);
+		const auto& vel = coordinator.getComponent<Velocity>(e);
 
-        pos.x += vel.x * elapsedTime;
-        pos.y += vel.y * elapsedTime;
-    }
+		pos.x += vel.x * elapsedTime;
+		pos.y += vel.y * elapsedTime;
+	}
 }
-}  // namespace rtype::ecs
+}

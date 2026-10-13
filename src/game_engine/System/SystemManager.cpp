@@ -32,4 +32,4 @@ void SystemManager::entitySignatureChanged(Entity entity,
 	}
 }
 
-}  // namespace rtype::ecs
+}

@@ -20,4 +20,4 @@ public:
 	std::set<Entity> entities;
 };
 
-}  // namespace rtype::ecs
+}

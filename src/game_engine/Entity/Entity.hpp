@@ -38,4 +38,4 @@ private:
 	Id _id;
 };
 
-}  // namespace rtype::ecs
+}
