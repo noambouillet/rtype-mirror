@@ -33,6 +33,7 @@ Signature WeaponSystem::signature(Coordinator& coordinator)
 /// A weapon that holds its fire stays ready, so it shoots as soon as it gets a target.
 void WeaponSystem::update(Coordinator& coordinator, float elapsedTime)
 {
+	std::vector<Entity> spawned;
 	for (const Entity& e : entities) {
 		auto& weapon = coordinator.getComponent<Weapon>(e);
 
@@ -42,6 +43,7 @@ void WeaponSystem::update(Coordinator& coordinator, float elapsedTime)
 		if (fire(coordinator, e))
 			weapon.remaining = weapon.cooldown;
 	}
+	return spawned;
 }
 
 /// Spawns the projectile matching the shooter: player ships shoot straight ahead, enemies fire their ShotKind once onscreen.

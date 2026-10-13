@@ -22,12 +22,12 @@ struct Velocity {
 };
 
 struct Health {
-    int maxHP = 0;
-    int hp = 0;
+	int maxHP = 0;
+	int hp = 0;
 };
 
 struct Damage {
-    int amount = 0;
+	int amount = 0;
 };
 
 struct Sprite {
@@ -48,4 +48,4 @@ struct Collider {
     std::uint32_t mask = 0;
 };
 
-} // namespace rtype::ecs
+}

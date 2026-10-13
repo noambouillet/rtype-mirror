@@ -10,12 +10,13 @@
 namespace rtype::ecs {
 
 /// Builds the signature the system needs (Position + Velocity).
-Signature MovementSystem::signature(Coordinator& coordinator) {
-    Signature sig;
+Signature MovementSystem::signature(Coordinator& coordinator)
+{
+	Signature sig;
 
-    sig.set(coordinator.getComponentType<Position>());
-    sig.set(coordinator.getComponentType<Velocity>());
-    return sig;
+	sig.set(coordinator.getComponentType<Position>());
+	sig.set(coordinator.getComponentType<Velocity>());
+	return sig;
 }
 
 /// Applies each entity's velocity to its position for a frame of elapsedTime seconds.
@@ -28,4 +29,4 @@ void MovementSystem::update(Coordinator& coordinator, float elapsedTime) {
         pos.y += vel.y * elapsedTime;
     }
 }
-} // namespace rtype::ecs
+}  // namespace rtype::ecs

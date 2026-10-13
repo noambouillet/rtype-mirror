@@ -43,13 +43,11 @@ target_include_directories(rtype_engine PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/src/ECS/System/Systems
 )
 
-add_executable(r-type_server
-    src/server/main.cpp
-    src/server/GameServer.cpp
-    src/server/Session.cpp
+set(RTYPE_GAME_SOURCES
     src/server/game/GameWorld.cpp
+    src/server/game/WorldEvent.cpp
+    src/server/game/WorldEventCollector.cpp
     src/server/game/Prefabs.cpp
-    src/server/network/UdpServer.cpp
     src/server/ecs/Systems/EnemySpawnSystem.cpp
     src/server/ecs/Systems/FormationSystem.cpp
     src/server/ecs/Systems/HitSystem.cpp
@@ -61,9 +59,18 @@ add_executable(r-type_server
     src/server/ecs/Systems/WeaponSystem.cpp
 )
 
+add_executable(r-type_server
+    src/server/main.cpp
+    src/server/GameServer.cpp
+    src/server/Session.cpp
+    src/server/network/UdpServer.cpp
+    ${RTYPE_GAME_SOURCES}
+)
+
 target_link_libraries(r-type_server PRIVATE rtype_protocol rtype_logger rtype_engine asio::asio Threads::Threads)
 if(WIN32)
-    target_link_libraries(r-type_server PRIVATE bcrypt)
+    target_compile_definitions(r-type_server PRIVATE _WIN32_WINNT=0x0601)
+    target_link_libraries(r-type_server PRIVATE bcrypt ws2_32)
 endif()
 
 add_executable(r-type_client
@@ -71,12 +78,18 @@ add_executable(r-type_client
     src/client/app/ClientApp.cpp
     src/client/app/ClientOptions.cpp
     src/client/SFML/AssetManager.cpp
+    src/client/SFML/LocalFirePredictor.cpp
     src/client/SFML/Sfml.cpp
+    src/client/SFML/VisualEffects.cpp
     src/client/network/GameClient.cpp
     src/client/network/UdpClient.cpp
 )
 target_link_libraries(r-type_client PRIVATE rtype_protocol rtype_logger
     asio::asio Threads::Threads SFML::Graphics SFML::Window SFML::System)
+if(WIN32)
+    target_compile_definitions(r-type_client PRIVATE _WIN32_WINNT=0x0601)
+    target_link_libraries(r-type_client PRIVATE ws2_32)
+endif()
 
 add_custom_target(rtype_assets ALL
     COMMAND ${CMAKE_COMMAND} -E copy_directory

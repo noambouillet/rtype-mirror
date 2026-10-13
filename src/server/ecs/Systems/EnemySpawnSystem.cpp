@@ -33,10 +33,11 @@ Signature EnemySpawnSystem::signature(Coordinator& coordinator)
 
 /// Counts each spawner down and sends a wave when it reaches zero.
 /// `active` is true when at least one player is connected
-void EnemySpawnSystem::update(Coordinator& coordinator, float elapsedTime, bool active)
+std::vector<Entity> EnemySpawnSystem::update(Coordinator& coordinator, float elapsedTime, bool active)
 {
+	std::vector<Entity> spawned;
 	if (!active)
-		return;
+		return spawned;
 	for (const Entity& e : entities) {
 		auto& spawner = coordinator.getComponent<WaveSpawner>(e);
 
@@ -46,6 +47,7 @@ void EnemySpawnSystem::update(Coordinator& coordinator, float elapsedTime, bool 
 		spawner.timer += spawner.interval;
 		spawnWave(coordinator);
 	}
+	return spawned;
 }
 
 /// Sends a lone Scant or a lone Bink on the ground now and then, otherwise a group of Patapata or a line of Bugs,

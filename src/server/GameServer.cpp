@@ -86,7 +86,8 @@ void GameServer::run(const volatile std::sig_atomic_t& running)
 
 	while (running != 0) {
 		const GameWorld::Input input = tick();
-		_world.update(input, deltaTime);
+		const std::vector<WorldEvent> events = _world.update(input, deltaTime);
+		broadcastEvents(events);
 		snapshotElapsed += TICK_DURATION;
 		if (snapshotElapsed >= SNAPSHOT_INTERVAL || input.connectedMask != previousConnectedMask) {
 			broadcast(network::PacketType::WorldSnapshot, buildSnapshot(input));
@@ -309,6 +310,43 @@ void GameServer::broadcast(network::PacketType type, const std::vector<std::uint
 		if (session) {
 			sendTo(*session, type, payload);
 		}
+	}
+}
+
+/// Sends one packet for each gameplay event, stamped with the tick that produced it.
+void GameServer::broadcastEvents(const std::vector<WorldEvent>& events)
+{
+	for (const WorldEvent& event : events) {
+		const GameWorld::EntityState& entity = event.entity();
+		std::vector<std::uint8_t> payload;
+		payload.reserve(24);
+		network::appendU64(payload, _tick);
+		network::PacketType type = network::PacketType::EntitySpawn;
+		switch (event.type()) {
+			case WorldEvent::Type::EntitySpawn:
+				appendEntityRecord(payload, entity);
+				break;
+			case WorldEvent::Type::EntityDestroy:
+				type = network::PacketType::EntityDestroy;
+				network::appendU32(payload, entity.id);
+				payload.push_back(static_cast<std::uint8_t>(entity.type));
+				network::appendU32(payload, encodePosition(entity.x));
+				network::appendU32(payload, encodePosition(entity.y));
+				break;
+			case WorldEvent::Type::EntityDamage:
+				type = network::PacketType::EntityDamage;
+				network::appendU32(payload, entity.id);
+				payload.push_back(entity.health);
+				break;
+			case WorldEvent::Type::PlayerDeath:
+				type = network::PacketType::PlayerDeath;
+				payload.push_back(entity.owner);
+				network::appendU32(payload, entity.id);
+				network::appendU32(payload, encodePosition(entity.x));
+				network::appendU32(payload, encodePosition(entity.y));
+				break;
+		}
+		broadcast(type, payload);
 	}
 }
 

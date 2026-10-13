@@ -7,19 +7,19 @@
 
 #include "Sfml.hpp"
 
-#include <optional>
-
 #include "SpriteRegions.hpp"
+#include "client/GameConfig.hpp"
 #include "client/network/GameClient.hpp"
 
 namespace rtype {
 
 /// Opens the window and prepares the game using the AssetManager
 Sfml::Sfml(AssetManager& assets)
-	: _window(sf::VideoMode({WINDOW_WIDTH, WINDOW_HEIGHT}), "R-Type"),
+	: _window(sf::VideoMode({client_config::WINDOW_WIDTH, client_config::WINDOW_HEIGHT}), "R-Type"),
 	  _assets(assets),
+	  _visualEffects(assets),
 	  _joystickId(0),
-	  _lastFrame(std::chrono::steady_clock::now())
+	  _animationStart(std::chrono::steady_clock::now())
 {
 	_window.setFramerateLimit(60);
 }
@@ -48,6 +48,12 @@ void Sfml::handleEvent()
 std::uint8_t Sfml::buttons() const
 {
 	return keyboardButtons() | joystickButtons();
+}
+
+/// Plays the local weapon effect before waiting for the server's projectile spawn.
+void Sfml::predictLocalFire(std::uint8_t buttons, std::optional<std::uint8_t> localPlayerId, const std::optional<network::WorldSnapshot>& snapshot)
+{
+	_visualEffects.predictLocalFire(buttons, localPlayerId, snapshot);
 }
 
 /// Reads the keyboard's current input state.
@@ -119,8 +125,10 @@ void Sfml::drawPlayer(const network::WorldEntity& entity)
 /// Draws a projectile fired by a player.
 void Sfml::drawPlayerShot(const network::WorldEntity& entity)
 {
-	sf::Sprite sprite = _assets.sprite(sprites::SHOT_SHEET, sprites::PLAYER_SHOT);
-	sprite.setOrigin({8.0F, 4.0F});
+	const std::chrono::milliseconds age = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - _animationStart);
+	const std::size_t frameIndex = static_cast<std::size_t>(age.count() / SHOT_FRAME_TIME.count()) % sprites::PLAYER_SHOT_FRAMES.size();
+	sf::Sprite sprite = _assets.sprite(sprites::SHOT_SHEET, sprites::PLAYER_SHOT_FRAMES[frameIndex]);
+	sprite.setOrigin({8.0F, 6.0F});
 	sprite.setScale({SHOT_SCALE, SHOT_SCALE});
 	sprite.setPosition({entity.x, entity.y});
 	_window.draw(sprite);
@@ -166,8 +174,8 @@ void Sfml::drawEnemy(const network::WorldEntity& entity)
 	_window.draw(sprite);
 }
 
-/// Draws every entities from the snapshot, or a black screen if not yet connected
-void Sfml::displayWindow(const std::optional<network::WorldSnapshot>& snapshot)
+/// Draws the latest snapshot and temporary sprite animations in one frame.
+void Sfml::displayWindow(const std::optional<network::WorldSnapshot>& snapshot, const std::vector<network::WorldEventNotice>& events)
 {
 	_window.clear(sf::Color::Black);
 	if (snapshot) {
@@ -190,6 +198,7 @@ void Sfml::displayWindow(const std::optional<network::WorldSnapshot>& snapshot)
 			}
 		}
 	}
+	_visualEffects.display(_window, snapshot, events);
 	_window.display();
 }
 

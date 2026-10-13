@@ -8,6 +8,8 @@
 #include "Logger.hpp"
 
 #include <ctime>
+#include <iomanip>
+#include <sstream>
 #include <string>
 
 #include "RTypeError.hpp"
@@ -61,10 +63,17 @@ void Logger::log(Level level, const std::string& message)
 		return;
 	}
 	const std::time_t now = std::time(nullptr);
-	std::string date = std::ctime(&now);
-	if (!date.empty() && date.back() == '\n') {
-		date.pop_back();
-	}
+	std::tm timeInfo{};
+
+#ifdef _WIN32
+	localtime_s(&timeInfo, &now);
+#else
+	localtime_r(&now, &timeInfo);
+#endif
+
+	std::ostringstream oss;
+	oss << std::put_time(&timeInfo, "%a %b %d %H:%M:%S %Y");
+	const std::string date = oss.str();
 	_output << '[' << date << "] ";
 	if (level != Level::Plain) {
 		std::string name = "ERROR";

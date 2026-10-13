@@ -37,6 +37,10 @@ enum class PacketType : std::uint8_t {
 	PlayerLeft = 0x05,
 	PlayerInput = 0x10,
 	WorldSnapshot = 0x20,
+	EntitySpawn = 0x21,
+	EntityDestroy = 0x22,
+	EntityDamage = 0x23,
+	PlayerDeath = 0x24,
 	Error = 0x67,
 };
 

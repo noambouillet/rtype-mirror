@@ -2,9 +2,9 @@
 
 This version implements the network layer for one game with up to four player
 sessions. The client sends joins, disconnects, and input commands and validates
-server replies. The server runs fixed ticks, moves temporary player entities,
-and sends full world snapshots. Shooting, enemies, collisions, and damage
-remain to be implemented.
+server replies. The server runs fixed ticks, simulates players, projectiles,
+enemies, collisions, and damage, and sends full world snapshots and gameplay
+events.
 
 ## Transport and encoding
 
@@ -42,9 +42,9 @@ the sender and skipping `0` on wraparound. Sequence `a` is newer than `b` when
 | `0x10` | `PLAYER_INPUT` | Client to server | 1 |
 | `0x20` | `WORLD_SNAPSHOT` | Server to client | `11 + 16 * entity_count` |
 | `0x21` | `ENTITY_SPAWN` | Server to clients | 24 |
-| `0x22` | `ENTITY_DESTROY` | Server to clients | 12 |
+| `0x22` | `ENTITY_DESTROY` | Server to clients | 21 |
 | `0x23` | `ENTITY_DAMAGE` | Server to clients | 13 |
-| `0x24` | `PLAYER_DEATH` | Server to clients | 13 |
+| `0x24` | `PLAYER_DEATH` | Server to clients | 21 |
 | `0x67` | `ERROR` | Server to client | 7 |
 
 The header's `type` identifies the message; payloads have no command code.
@@ -217,21 +217,32 @@ applied tick.
 
 ### Events
 
-Events provide prompt effects between snapshots. Each is sent once and starts
-with `server_tick: u64`, followed by:
+`GameWorld` returns a tick-local list of spawn, surviving damage, destruction,
+and player death events. `GameServer` sends one packet per event, before that
+tick's snapshot. The client validates and queues events for presentation; they
+do not replace its authoritative snapshot. Disconnecting a player removes the
+ship and uses the separate `PLAYER_LEFT` notice; it does not count as a death.
+
+Each event is sent once and starts with `server_tick: u64`, followed by:
 
 | Type | Remaining payload fields in wire order |
 | --- | --- |
 | `ENTITY_SPAWN` | One complete 16-byte entity record |
-| `ENTITY_DESTROY` | `entity_id: u32` |
+| `ENTITY_DESTROY` | `entity_id: u32`, `kind: u8`, `x: i32`, `y: i32` |
 | `ENTITY_DAMAGE` | `entity_id: u32`, `remaining_health: u8` |
-| `PLAYER_DEATH` | `player_id: u8`, `entity_id: u32` |
+| `PLAYER_DEATH` | `player_id: u8`, `entity_id: u32`, `x: i32`, `y: i32` |
 
 `PLAYER_DEATH` removes the ship and clears its alive bit, but can leave the
 session connected. `ENTITY_DESTROY` covers enemies and projectiles. Respawning
 a player uses `ENTITY_SPAWN` with a new entity ID. Ignore events at or before
 the last applied snapshot tick. `ENTITY_DAMAGE` reports surviving health; at
-zero, the server sends `ENTITY_DESTROY` or `PLAYER_DEATH` instead.
+zero, the server sends `ENTITY_DESTROY` or `PLAYER_DEATH` instead. Repeated
+damage in one tick is coalesced to the final surviving health; a terminal event
+supersedes damage for the same entity. Destroy and death positions are the last
+authoritative positions in 1/16-pixel units. A destroy kind is enemy, player
+projectile, or enemy projectile. The client queues at most 256 unconsumed
+events and drops later ones until presentation drains the queue. UDP loss or
+reordering can omit an effect; snapshots repair world state.
 
 ## Packet handling and errors
 

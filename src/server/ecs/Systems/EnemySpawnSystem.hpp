@@ -8,6 +8,7 @@
 #pragma once
 
 #include <random>
+#include <vector>
 
 #include "Coordinator.hpp"
 #include "System.hpp"
