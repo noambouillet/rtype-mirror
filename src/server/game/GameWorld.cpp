@@ -18,7 +18,6 @@
 #include "server/ecs/Systems/HitSystem.hpp"
 #include "server/ecs/Systems/OffscreenSystem.hpp"
 #include "server/ecs/Systems/HoverMotionSystem.hpp"
-#include "server/ecs/Systems/PathFollowSystem.hpp"
 #include "server/ecs/Systems/PlayerControlSystem.hpp"
 #include "server/ecs/Systems/SineMotionSystem.hpp"
 #include "server/ecs/Systems/WeaponSystem.hpp"
@@ -60,7 +59,6 @@ void GameWorld::registerComponents()
 	_coordinator.registerComponent<ecs::DestroyOnHit>();
 	_coordinator.registerComponent<ecs::SineMotion>();
 	_coordinator.registerComponent<ecs::FormationSpawner>();
-	_coordinator.registerComponent<ecs::PathFollow>();
 	_coordinator.registerComponent<ecs::HoverMotion>();
 }
 
@@ -72,7 +70,6 @@ void GameWorld::registerSystems()
 	registerSystem<ecs::EnemySpawnSystem>(_coordinator);
 	registerSystem<ecs::FormationSystem>(_coordinator);
 	registerSystem<ecs::SineMotionSystem>(_coordinator);
-	registerSystem<ecs::PathFollowSystem>(_coordinator);
 	registerSystem<ecs::HoverMotionSystem>(_coordinator);
 	registerSystem<ecs::MovementSystem>(_coordinator);
 	registerSystem<ecs::CollisionSystem>(_coordinator);
@@ -98,7 +95,6 @@ void GameWorld::runSystems(const Input& input, float deltaTime)
 	_coordinator.getSystem<ecs::EnemySpawnSystem>().update(_coordinator, deltaTime, input.connectedMask != 0);
 	_coordinator.getSystem<ecs::FormationSystem>().update(_coordinator, deltaTime);
 	_coordinator.getSystem<ecs::SineMotionSystem>().update(_coordinator, deltaTime);
-	_coordinator.getSystem<ecs::PathFollowSystem>().update(_coordinator, deltaTime);
 	_coordinator.getSystem<ecs::HoverMotionSystem>().update(_coordinator, deltaTime);
 	_coordinator.getSystem<ecs::MovementSystem>().update(_coordinator, deltaTime);
 	auto& collision = _coordinator.getSystem<ecs::CollisionSystem>();

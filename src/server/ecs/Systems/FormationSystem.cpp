@@ -52,14 +52,14 @@ void FormationSystem::update(Coordinator& coordinator, float elapsedTime)
 		auto& formation = coordinator.getComponent<FormationSpawner>(e);
 
 		formation.timer -= elapsedTime;
-		if (formation.timer > 0.0f || formation.remaining <= 0)
+		if (formation.timer > 0.0F || formation.remaining <= 0)
 			continue;
 		formation.timer += formation.delay;
 		formation.remaining--;
 		const bool done = formation.remaining <= 0;
 		const EnemyKind kind = formation.kind;
 		std::uniform_real_distribution<float> height(formation.y - formation.spread, formation.y + formation.spread);
-		std::uniform_real_distribution<float> phase(0.0f, 2.0f * std::numbers::pi_v<float>);
+		std::uniform_real_distribution<float> phase(0.0F, 2.0F * std::numbers::pi_v<float>);
 		std::uniform_real_distribution<float> firstShot(config::ENEMY_FIRST_SHOT_MIN,
 			config::ENEMY_FIRST_SHOT_MIN + fireCooldown(kind));
 		const float y = height(_rng);

@@ -24,7 +24,7 @@ Signature SineMotionSystem::signature(Coordinator& coordinator)
 	return sig;
 }
 
-/// Sets each velocity to the derivative of `amplitude * sin(frequency * elapsed + phase)` while moving left.
+/// Sets each velocity to the derivative of motion while moving left.
 void SineMotionSystem::update(Coordinator& coordinator, float elapsedTime)
 {
 	for (const Entity& e : entities) {

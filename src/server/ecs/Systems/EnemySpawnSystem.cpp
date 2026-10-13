@@ -41,7 +41,7 @@ void EnemySpawnSystem::update(Coordinator& coordinator, float elapsedTime, bool 
 		auto& spawner = coordinator.getComponent<WaveSpawner>(e);
 
 		spawner.timer -= elapsedTime;
-		if (spawner.timer > 0.0f)
+		if (spawner.timer > 0.0F)
 			continue;
 		spawner.timer += spawner.interval;
 		spawnWave(coordinator);
@@ -66,12 +66,12 @@ void EnemySpawnSystem::spawnWave(Coordinator& coordinator)
 		const float descent = -config::BUG_ARC_HEIGHT * std::sin(config::BUG_ARC_TURNS * std::numbers::pi_v<float>);
 		std::uniform_int_distribution<int> size(config::BUG_MIN_COUNT, config::BUG_MAX_COUNT);
 		std::uniform_real_distribution<float> height(config::BUG_ARC_HEIGHT + config::BUG_HEIGHT,
-			config::WORLD_HEIGHT - std::max(descent, 0.0f) - config::BUG_HEIGHT);
+			config::WORLD_HEIGHT - std::max(descent, 0.0F) - config::BUG_HEIGHT);
 
 		prefabs::createFormation(coordinator, EnemyKind::Bug, height(_rng), size(_rng));
 		return;
 	}
-	const float margin = config::PATAPATA_SPREAD + config::PATAPATA_AMPLITUDE + config::PATAPATA_HEIGHT / 2.0f;
+	const float margin = config::PATAPATA_SPREAD + config::PATAPATA_AMPLITUDE + config::PATAPATA_HEIGHT / 2.0F;
 	std::uniform_int_distribution<int> size(config::PATAPATA_MIN_COUNT, config::PATAPATA_MAX_COUNT);
 	std::uniform_real_distribution<float> height(margin, config::WORLD_HEIGHT - margin);
 

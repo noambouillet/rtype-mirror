@@ -21,7 +21,7 @@ namespace rtype::ecs {
 static std::optional<float> closestPlayerY(Coordinator& coordinator, Position origin)
 {
 	std::optional<float> y;
-	float closest = 0.0f;
+	float closest = 0.0F;
 
 	for (const Entity& player : coordinator.getSystem<PlayerControlSystem>().entities) {
 		const auto& target = coordinator.getComponent<Position>(player);
@@ -52,7 +52,7 @@ void HoverMotionSystem::update(Coordinator& coordinator, float elapsedTime)
 	for (const Entity& e : entities) {
 		auto& motion = coordinator.getComponent<HoverMotion>(e);
 		const Position position = coordinator.getComponent<Position>(e);
-		Velocity velocity{0.0f, 0.0f};
+		Velocity velocity{0.0F, 0.0F};
 
 		motion.elapsed += elapsedTime;
 		if (motion.elapsed >= motion.stayTime) {

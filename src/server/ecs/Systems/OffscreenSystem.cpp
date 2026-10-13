@@ -24,8 +24,7 @@ Signature OffscreenSystem::signature(Coordinator& coordinator)
 	return sig;
 }
 
-/// Applies each entity's `Offscreen` action: `Destroy` adds `Destroy` once the position is beyond the world plus
-/// `margin`, `Block` clamps the position so the entity (its collider when it has one) stays inside the world.
+/// Handles out-of-bounds entities by either clamping their position or destroying them.
 void OffscreenSystem::update(Coordinator& coordinator, float worldWidth, float worldHeight, float margin)
 {
 	for (const Entity& e : entities) {

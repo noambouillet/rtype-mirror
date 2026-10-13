@@ -148,7 +148,7 @@ void GameClient::handleSessionPacket(const Header& header, const std::vector<std
 float GameClient::decodePosition(const std::vector<std::uint8_t>& bytes, std::size_t offset)
 {
 	const std::int32_t fixedPosition = static_cast<std::int32_t>(readU32(bytes, offset));
-	return static_cast<float>(fixedPosition) / 16.0f;
+	return static_cast<float>(fixedPosition) / 16.0F;
 }
 
 /// Parses the entity records after verifying the exact snapshot packet size.
