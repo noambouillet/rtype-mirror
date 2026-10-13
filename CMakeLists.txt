@@ -63,6 +63,7 @@ add_executable(r-type_server
     src/server/main.cpp
     src/server/GameServer.cpp
     src/server/Session.cpp
+    src/server/network/ServerNetworkService.cpp
     src/server/network/UdpServer.cpp
     ${RTYPE_GAME_SOURCES}
 )

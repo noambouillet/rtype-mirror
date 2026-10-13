@@ -18,6 +18,7 @@
 #include <system_error>
 
 #include "GameServer.hpp"
+#include "network/UdpServer.hpp"
 #include "utils/Logger.hpp"
 
 namespace rtype {
@@ -87,7 +88,8 @@ static int runServer(const ServerOptions& options)
 			logger = std::make_unique<Logger>(std::filesystem::path(options.logFile));
 		}
 		logger->setVerbose(true);
-		GameServer server(options.port);
+		network::UdpServer transport(options.port);
+		GameServer server(transport);
 		logger->info("R-Type server listening on UDP port " + std::to_string(options.port));
 		server.run(running);
 		logger->info("Goodbye...");
