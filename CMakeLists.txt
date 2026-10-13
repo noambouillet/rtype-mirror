@@ -74,6 +74,16 @@ if(WIN32)
     target_link_libraries(r-type_server PRIVATE bcrypt ws2_32)
 endif()
 
+add_library(rtype_client_core
+    src/client/network/GameClient.cpp
+    src/client/view/SpriteCatalog.cpp
+    src/client/view/ClientNetworkSystem.cpp
+    src/client/view/EffectSystem.cpp
+    src/client/view/ClientWorld.cpp
+    src/client/view/LocalFirePredictor.cpp
+)
+target_link_libraries(rtype_client_core PUBLIC rtype_engine rtype_protocol)
+
 add_executable(r-type_client
     src/client/main.cpp
     src/client/app/ClientApp.cpp
