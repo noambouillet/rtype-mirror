@@ -37,8 +37,8 @@ void PlayerControlSystem::update(Coordinator& coordinator, const Buttons& button
 		const float length = std::sqrt(horizontal * horizontal + vertical * vertical);
 
 		auto& velocity = coordinator.getComponent<Velocity>(e);
-		if (length == 0.0f) {
-			velocity = {0.0f, 0.0f};
+		if (length == 0.0F) {
+			velocity = {0.0F, 0.0F};
 		} else {
 			velocity = {control.speed * horizontal / length, control.speed * vertical / length};
 		}

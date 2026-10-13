@@ -51,6 +51,7 @@ private:
 	void removeSession(std::uint8_t playerId, std::uint8_t reason);
 	void sendTo(Session& session, network::PacketType type, const std::vector<std::uint8_t>& payload);
 	void broadcast(network::PacketType type, const std::vector<std::uint8_t>& payload);
+	void broadcastEvents(const std::vector<WorldEvent>& events);
 	GameWorld::Input collectInput(Clock::time_point now);
 	std::vector<std::uint8_t> buildSnapshot(const GameWorld::Input& input);
 

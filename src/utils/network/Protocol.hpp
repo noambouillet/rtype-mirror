@@ -37,6 +37,10 @@ enum class PacketType : std::uint8_t {
 	PlayerLeft = 0x05,
 	PlayerInput = 0x10,
 	WorldSnapshot = 0x20,
+	EntitySpawn = 0x21,
+	EntityDestroy = 0x22,
+	EntityDamage = 0x23,
+	PlayerDeath = 0x24,
 	Error = 0x67,
 };
 
@@ -55,6 +59,20 @@ enum class EntityType : std::uint8_t {
 	Enemy = 2,
 	PlayerProjectile = 3,
 	EnemyProjectile = 4,
+};
+
+/// Enemy kinds, carried as the variant of an Enemy record.
+enum class EnemyKind : std::uint8_t {
+	Patapata = 0,
+	Bug = 1,
+	Scant = 2,
+	Bink = 3,
+};
+
+/// Enemy shot kinds, carried as the variant of an EnemyProjectile record.
+enum class ShotKind : std::uint8_t {
+	Aimed = 0,
+	Beam = 1,
 };
 
 struct Header {

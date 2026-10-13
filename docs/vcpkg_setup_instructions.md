@@ -137,9 +137,3 @@ The server listens on UDP port 6767 by default. Pass a different port as its onl
 ```
 
 On Windows, run `build\Debug\r-type_server.exe 6767` (or use the output path for your chosen CMake generator). Stop it with Ctrl+C. The server has no graphical interface. It handles sessions and inputs, advances the game world at fixed ticks, and sends world snapshots. Clients use the binary protocol in [RFC.md](RFC.md).
-
-The UDP smoke test requires Python 3 and local UDP socket access:
-
-```bash
-ctest --test-dir build --output-on-failure
-```

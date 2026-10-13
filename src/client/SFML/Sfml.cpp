@@ -7,20 +7,21 @@
 
 #include "Sfml.hpp"
 
-#include <optional>
-
 #include "SpriteRegions.hpp"
+#include "client/GameConfig.hpp"
 #include "client/network/GameClient.hpp"
 
 namespace rtype {
 
 /// Opens the window and prepares the game using the AssetManager
 Sfml::Sfml(AssetManager& assets)
-	: _window(sf::VideoMode({WINDOW_WIDTH, WINDOW_HEIGHT}), "R-Type"),
+	: _window(sf::VideoMode({client_config::WINDOW_WIDTH, client_config::WINDOW_HEIGHT}), "R-Type"),
 	  _assets(assets),
+	  _visualEffects(assets),
 	  _joystickId(0),
 	  _lastFrame(std::chrono::steady_clock::now()),
 	  _background(assets, _window)
+	  _animationStart(std::chrono::steady_clock::now())
 {
 	_window.setFramerateLimit(60);
 }
@@ -58,6 +59,12 @@ void Sfml::updateBackground()
 	const float elapsedTime = std::chrono::duration<float>(now - _lastFrame).count();
 	_background.update(elapsedTime);
 	_lastFrame = now;
+}
+
+/// Plays the local weapon effect before waiting for the server's projectile spawn.
+void Sfml::predictLocalFire(std::uint8_t buttons, std::optional<std::uint8_t> localPlayerId, const std::optional<network::WorldSnapshot>& snapshot)
+{
+	_visualEffects.predictLocalFire(buttons, localPlayerId, snapshot);
 }
 
 /// Reads the keyboard's current input state.
@@ -121,7 +128,7 @@ void Sfml::drawPlayer(const network::WorldEntity& entity)
 	}
 	sf::Sprite sprite = _assets.sprite(sprites::PLAYER_SHEET, sprites::PLAYER_SHIPS[safeSpriteId]);
 	sprite.setOrigin({16.0F, 8.0F});
-	sprite.setScale({2.0F, 2.0F});
+	sprite.setScale({SHIP_SCALE, SHIP_SCALE});
 	sprite.setPosition({entity.x, entity.y});
 	_window.draw(sprite);
 }
@@ -129,25 +136,57 @@ void Sfml::drawPlayer(const network::WorldEntity& entity)
 /// Draws a projectile fired by a player.
 void Sfml::drawPlayerShot(const network::WorldEntity& entity)
 {
-	sf::Sprite sprite = _assets.sprite(sprites::SHOT_SHEET, sprites::PLAYER_SHOT);
-	sprite.setOrigin({8.0F, 4.0F});
-	sprite.setScale({2.0F, 2.0F});
+	const std::chrono::milliseconds age = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - _animationStart);
+	const std::size_t frameIndex = static_cast<std::size_t>(age.count() / SHOT_FRAME_TIME.count()) % sprites::PLAYER_SHOT_FRAMES.size();
+	sf::Sprite sprite = _assets.sprite(sprites::SHOT_SHEET, sprites::PLAYER_SHOT_FRAMES[frameIndex]);
+	sprite.setOrigin({8.0F, 6.0F});
+	sprite.setScale({SHOT_SCALE, SHOT_SCALE});
 	sprite.setPosition({entity.x, entity.y});
 	_window.draw(sprite);
 }
 
-/// Draws a Bydo enemy.
+/// Draws a projectile fired by an enemy: a Scant beam or, by default, an aimed orb.
+void Sfml::drawEnemyShot(const network::WorldEntity& entity)
+{
+	const bool beam = static_cast<network::ShotKind>(entity.spriteId) == network::ShotKind::Beam;
+	sf::Sprite sprite = beam ? _assets.sprite(sprites::SCANT_SHEET, sprites::SCANT_BEAM)
+							 : _assets.sprite(sprites::ENEMY_SHOT_SHEET, sprites::ENEMY_SHOT);
+	sprite.setOrigin(beam ? sf::Vector2f{27.0F, 8.0F} : sf::Vector2f{3.5F, 3.0F});
+	sprite.setScale({SHOT_SCALE, SHOT_SCALE});
+	sprite.setPosition({entity.x, entity.y});
+	_window.draw(sprite);
+}
+
+/// Draws an enemy: a Bug, a Scant, a Bink or, by default, a Patapata.
 void Sfml::drawEnemy(const network::WorldEntity& entity)
 {
-	sf::Sprite sprite = _assets.sprite(sprites::ENEMY_SHEET, sprites::ENEMY_BYDO);
-	sprite.setOrigin({16.5F, 18.0F});
-	sprite.setScale({2.0F, 2.0F});
+	sf::Sprite sprite = _assets.sprite(sprites::ENEMY_SHEET, sprites::ENEMY_PATAPATA);
+	sf::Vector2f origin{16.5F, 18.0F};
+
+	switch (static_cast<network::EnemyKind>(entity.spriteId)) {
+		case network::EnemyKind::Bug:
+			sprite = _assets.sprite(sprites::BUG_SHEET, sprites::ENEMY_BUG);
+			origin = {16.5F, 17.0F};
+			break;
+		case network::EnemyKind::Scant:
+			sprite = _assets.sprite(sprites::SCANT_SHEET, sprites::ENEMY_SCANT);
+			origin = {28.0F, 27.0F};
+			break;
+		case network::EnemyKind::Bink:
+			sprite = _assets.sprite(sprites::BINK_SHEET, sprites::ENEMY_BINK);
+			origin = {16.0F, 14.5F};
+			break;
+		default:
+			break;
+	}
+	sprite.setOrigin(origin);
+	sprite.setScale({SHIP_SCALE, SHIP_SCALE});
 	sprite.setPosition({entity.x, entity.y});
 	_window.draw(sprite);
 }
 
-/// Draws every entities from the snapshot, or the background if not yet connected
-void Sfml::displayWindow(const std::optional<network::WorldSnapshot>& snapshot)
+/// Draws the latest snapshot and temporary sprite animations in one frame.
+void Sfml::displayWindow(const std::optional<network::WorldSnapshot>& snapshot, const std::vector<network::WorldEventNotice>& events)
 {
 	_window.clear(sf::Color::Black);
 	_background.draw(_window);
@@ -163,11 +202,15 @@ void Sfml::displayWindow(const std::optional<network::WorldSnapshot>& snapshot)
 				case network::EntityType::Enemy:
 					drawEnemy(entity);
 					break;
+				case network::EntityType::EnemyProjectile:
+					drawEnemyShot(entity);
+					break;
 				default:
 					break;
 			}
 		}
 	}
+	_visualEffects.display(_window, snapshot, events);
 	_window.display();
 }
 

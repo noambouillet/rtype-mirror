@@ -24,21 +24,33 @@ Signature ReplicationSystem::signature(Coordinator& coordinator)
 	return sig;
 }
 
-/// Lists what clients must see of every replicated entity (at most 64), health clamped to the u8 range.
+/// Captures one replicated entity while its components still exist.
+std::optional<ReplicatedState> ReplicationSystem::capture(Coordinator& coordinator, Entity entity) const
+{
+	if (!entities.contains(entity) || !coordinator.isAlive(entity)) {
+		return std::nullopt;
+	}
+	const Replicated& info = coordinator.getComponent<Replicated>(entity);
+	const Position& position = coordinator.getComponent<Position>(entity);
+	int health = 0;
+	if (coordinator.hasComponent<Health>(entity)) {
+		health = std::clamp(coordinator.getComponent<Health>(entity).hp, 0, 255);
+	}
+	return ReplicatedState{entity.id(), info.type, info.owner, info.variant, static_cast<std::uint8_t>(health), position.x, position.y};
+}
+
+/// Lists what clients must see of every replicated entity (at most 64).
 std::vector<ReplicatedState> ReplicationSystem::collect(Coordinator& coordinator)
 {
 	std::vector<ReplicatedState> states;
 	states.reserve(std::min(entities.size(), network::MAX_SNAPSHOT_ENTITIES));
-
 	for (const Entity& e : entities) {
-		if (states.size() >= network::MAX_SNAPSHOT_ENTITIES)
+		if (states.size() >= network::MAX_SNAPSHOT_ENTITIES) {
 			break;
-		const auto& info = coordinator.getComponent<Replicated>(e);
-		const auto& position = coordinator.getComponent<Position>(e);
-		int health = 0;
-		if (coordinator.hasComponent<Health>(e))
-			health = std::clamp(coordinator.getComponent<Health>(e).hp, 0, 255);
-		states.push_back({e.id(), info.type, info.owner, info.variant, static_cast<std::uint8_t>(health), position.x, position.y});
+		}
+		if (const std::optional<ReplicatedState> state = capture(coordinator, e)) {
+			states.push_back(*state);
+		}
 	}
 	return states;
 }

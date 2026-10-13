@@ -25,7 +25,7 @@ static std::uint64_t generateNonce()
 
 /// Creates a client with a fresh nonce for this join attempt.
 GameClient::GameClient(const std::string& host, std::uint16_t port)
-	: _udp(host, port), _nonce(generateNonce()), _sessionId(0), _nextSequence(1), _playerId(0), _lastButtons(0), _joinAttempts(0), _status(ClientStatus::Joining), _worldSnapshot{}
+	: _udp(host, port), _nonce(generateNonce()), _sessionId(0), _nextSequence(1), _playerId(0), _lastButtons(0), _joinAttempts(0), _status(ClientStatus::Joining), _worldSnapshot{}, _events{}
 {
 }
 
@@ -74,6 +74,14 @@ std::optional<ErrorCode> GameClient::takeError()
 	const auto error = _error;
 	_error.reset();
 	return error;
+}
+
+/// Transfers validated gameplay notices to the presentation layer.
+std::vector<WorldEventNotice> GameClient::takeEvents()
+{
+	std::vector<WorldEventNotice> events;
+	events.swap(_events);
+	return events;
 }
 
 ClientStatus GameClient::status() const
@@ -141,6 +149,9 @@ void GameClient::handleSessionPacket(const Header& header, const std::vector<std
 		}
 	} else if (header.type == PacketType::WorldSnapshot) {
 		handleSnapshot(bytes);
+	} else if (header.type == PacketType::EntitySpawn || header.type == PacketType::EntityDestroy ||
+			   header.type == PacketType::EntityDamage || header.type == PacketType::PlayerDeath) {
+		handleWorldEvent(header, bytes);
 	}
 }
 
@@ -148,7 +159,7 @@ void GameClient::handleSessionPacket(const Header& header, const std::vector<std
 float GameClient::decodePosition(const std::vector<std::uint8_t>& bytes, std::size_t offset)
 {
 	const std::int32_t fixedPosition = static_cast<std::int32_t>(readU32(bytes, offset));
-	return static_cast<float>(fixedPosition) / 16.0f;
+	return static_cast<float>(fixedPosition) / 16.0F;
 }
 
 /// Parses the entity records after verifying the exact snapshot packet size.
@@ -164,27 +175,65 @@ std::optional<std::vector<WorldEntity>> GameClient::parseEntities(const std::vec
 	entities.reserve(entityCount);
 	for (std::size_t index = 0; index < entityCount; index++) {
 		const std::size_t recordOffset = HEADER_SIZE + SNAPSHOT_HEADER_SIZE + index * ENTITY_RECORD_SIZE;
-		const std::uint8_t rawType = bytes[recordOffset + 4];
-		const std::uint8_t ownerPlayerId = bytes[recordOffset + 5];
-		const std::uint8_t spriteId = bytes[recordOffset + 6];
-		const EntityType entityType = static_cast<EntityType>(rawType);
-
-		if (entityType < EntityType::Player || entityType > EntityType::EnemyProjectile ||
-			((entityType == EntityType::Player || entityType == EntityType::PlayerProjectile) ? ownerPlayerId > 3 : ownerPlayerId != NO_OWNER) ||
-			(entityType == EntityType::Player && spriteId != ownerPlayerId)) {
+		const std::optional<WorldEntity> entity = parseEntityRecord(bytes, recordOffset);
+		if (!entity) {
 			return std::nullopt;
 		}
-		entities.push_back({
-			.entityId = readU32(bytes, recordOffset),
-			.entityType = static_cast<EntityType>(entityType),
-			.ownerPlayerId = ownerPlayerId,
-			.spriteId = spriteId,
-			.health = bytes[recordOffset + 7],
-			.x = decodePosition(bytes, recordOffset + 8),
-			.y = decodePosition(bytes, recordOffset + 12),
-		});
+		entities.push_back(*entity);
 	}
 	return entities;
+}
+
+/// Parses one entity record after the caller validates its packet length.
+std::optional<WorldEntity> GameClient::parseEntityRecord(const std::vector<std::uint8_t>& bytes, std::size_t offset)
+{
+	const EntityType kind = static_cast<EntityType>(bytes[offset + 4]);
+	const std::uint8_t owner = bytes[offset + 5];
+	const std::uint8_t variant = bytes[offset + 6];
+	const std::uint8_t health = bytes[offset + 7];
+	if (kind < EntityType::Player || kind > EntityType::EnemyProjectile ||
+		((kind == EntityType::Player || kind == EntityType::PlayerProjectile) ? owner > 3 : owner != NO_OWNER) ||
+		(kind == EntityType::Player && (variant != owner || health == 0)) || (kind == EntityType::Enemy && health == 0) ||
+		((kind == EntityType::PlayerProjectile || kind == EntityType::EnemyProjectile) && health != 0)) {
+		return std::nullopt;
+	}
+	return WorldEntity{readU32(bytes, offset), kind, owner, variant, health, decodePosition(bytes, offset + 8), decodePosition(bytes, offset + 12)};
+}
+
+/// Queues a validated event newer than the last authoritative snapshot.
+void GameClient::handleWorldEvent(const Header& header, const std::vector<std::uint8_t>& bytes)
+{
+	const std::uint64_t tick = readU64(bytes, HEADER_SIZE);
+	if ((_worldSnapshot && tick <= _worldSnapshot->tick) || _events.size() >= MAX_PENDING_EVENTS) {
+		return;
+	}
+	const std::size_t offset = HEADER_SIZE + 8;
+	switch (header.type) {
+		case PacketType::EntitySpawn: {
+			const std::optional<WorldEntity> entity = parseEntityRecord(bytes, offset);
+			if (entity) {
+				_events.push_back(WorldEventNotice{tick, EntitySpawnEvent{*entity}});
+			}
+			break;
+		}
+		case PacketType::EntityDestroy: {
+			const EntityDestroyEvent event{readU32(bytes, offset), static_cast<EntityType>(bytes[offset + 4]),
+				decodePosition(bytes, offset + 5), decodePosition(bytes, offset + 9)};
+			_events.push_back(WorldEventNotice{tick, event});
+			break;
+		}
+		case PacketType::EntityDamage:
+			_events.push_back(WorldEventNotice{tick, EntityDamageEvent{readU32(bytes, offset), bytes[offset + 4]}});
+			break;
+		case PacketType::PlayerDeath: {
+			const PlayerDeathEvent event{bytes[offset], readU32(bytes, offset + 1),
+				decodePosition(bytes, offset + 5), decodePosition(bytes, offset + 9)};
+			_events.push_back(WorldEventNotice{tick, event});
+			break;
+		}
+		default:
+			break;
+	}
 }
 
 /// Replaces the cached world only with a complete, newer snapshot from the connected server.
