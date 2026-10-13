@@ -129,8 +129,7 @@ void Sfml::drawPlayerShot(const network::WorldEntity& entity)
 /// Draws a projectile fired by an enemy: a Scant beam or, by default, an aimed orb.
 void Sfml::drawEnemyShot(const network::WorldEntity& entity)
 {
-	// Variant 1 is a Scant beam (server ShotKind); any other variant falls back to the aimed orb.
-	const bool beam = entity.spriteId == 1;
+	const bool beam = static_cast<network::ShotKind>(entity.spriteId) == network::ShotKind::Beam;
 	sf::Sprite sprite = beam ? _assets.sprite(sprites::SCANT_SHEET, sprites::SCANT_BEAM)
 							 : _assets.sprite(sprites::ENEMY_SHOT_SHEET, sprites::ENEMY_SHOT);
 	sprite.setOrigin(beam ? sf::Vector2f{27.0F, 8.0F} : sf::Vector2f{3.5F, 3.0F});
@@ -142,20 +141,19 @@ void Sfml::drawEnemyShot(const network::WorldEntity& entity)
 /// Draws an enemy: a Bug, a Scant, a Bink or, by default, a Patapata.
 void Sfml::drawEnemy(const network::WorldEntity& entity)
 {
-	// The variant is the server EnemyKind: 1 is a Bug, 2 a Scant, 3 a Bink, anything else falls back to the Patapata.
 	sf::Sprite sprite = _assets.sprite(sprites::ENEMY_SHEET, sprites::ENEMY_PATAPATA);
 	sf::Vector2f origin{16.5F, 18.0F};
 
-	switch (entity.spriteId) {
-		case 1:
+	switch (static_cast<network::EnemyKind>(entity.spriteId)) {
+		case network::EnemyKind::Bug:
 			sprite = _assets.sprite(sprites::BUG_SHEET, sprites::ENEMY_BUG);
 			origin = {16.5F, 17.0F};
 			break;
-		case 2:
+		case network::EnemyKind::Scant:
 			sprite = _assets.sprite(sprites::SCANT_SHEET, sprites::ENEMY_SCANT);
 			origin = {28.0F, 27.0F};
 			break;
-		case 3:
+		case network::EnemyKind::Bink:
 			sprite = _assets.sprite(sprites::BINK_SHEET, sprites::ENEMY_BINK);
 			origin = {16.0F, 14.5F};
 			break;

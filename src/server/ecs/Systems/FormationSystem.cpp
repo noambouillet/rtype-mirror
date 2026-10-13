@@ -19,16 +19,16 @@ namespace rtype::ecs {
 FormationSystem::FormationSystem() : _rng(std::random_device{}()) {}
 
 /// Returns how often an enemy of `kind` fires, which bounds the random delay before its first shot.
-static float fireCooldown(EnemyKind kind)
+static float fireCooldown(network::EnemyKind kind)
 {
 	switch (kind) {
-		case EnemyKind::Bug:
+		case network::EnemyKind::Bug:
 			return config::BUG_FIRE_COOLDOWN;
-		case EnemyKind::Scant:
+		case network::EnemyKind::Scant:
 			return config::SCANT_FIRE_COOLDOWN;
-		case EnemyKind::Bink:
+		case network::EnemyKind::Bink:
 			return config::BINK_FIRE_COOLDOWN;
-		case EnemyKind::Patapata:
+		case network::EnemyKind::Patapata:
 		default:
 			return config::PATAPATA_FIRE_COOLDOWN;
 	}
@@ -57,18 +57,18 @@ void FormationSystem::update(Coordinator& coordinator, float elapsedTime)
 		formation.timer += formation.delay;
 		formation.remaining--;
 		const bool done = formation.remaining <= 0;
-		const EnemyKind kind = formation.kind;
+		const network::EnemyKind kind = formation.kind;
 		std::uniform_real_distribution<float> height(formation.y - formation.spread, formation.y + formation.spread);
 		std::uniform_real_distribution<float> phase(0.0F, 2.0F * std::numbers::pi_v<float>);
 		std::uniform_real_distribution<float> firstShot(config::ENEMY_FIRST_SHOT_MIN,
 			config::ENEMY_FIRST_SHOT_MIN + fireCooldown(kind));
 		const float y = height(_rng);
 		if (prefabs::canSpawnReplicated(coordinator)) {
-			if (kind == EnemyKind::Scant)
+			if (kind == network::EnemyKind::Scant)
 				prefabs::createScant(coordinator, y, firstShot(_rng));
-			else if (kind == EnemyKind::Bink)
+			else if (kind == network::EnemyKind::Bink)
 				prefabs::createBink(coordinator, firstShot(_rng));
-			else if (kind == EnemyKind::Bug)
+			else if (kind == network::EnemyKind::Bug)
 				prefabs::createBug(coordinator, y, firstShot(_rng));
 			else
 				prefabs::createPatapata(coordinator, y, phase(_rng), firstShot(_rng));

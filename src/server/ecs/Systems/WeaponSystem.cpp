@@ -55,7 +55,7 @@ bool WeaponSystem::fire(Coordinator& coordinator, Entity shooter)
 	}
 	if (origin.x > config::WORLD_WIDTH)
 		return false;
-	if (coordinator.getComponent<Weapon>(shooter).shot == ShotKind::Beam) {
+	if (coordinator.getComponent<Weapon>(shooter).shot == network::ShotKind::Beam) {
 		prefabs::createScantBeam(coordinator, origin);
 		return true;
 	}

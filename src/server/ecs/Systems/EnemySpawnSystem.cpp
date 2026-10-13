@@ -55,11 +55,11 @@ void EnemySpawnSystem::spawnWave(Coordinator& coordinator)
 	if (std::bernoulli_distribution(config::SCANT_WAVE_CHANCE)(_rng)) {
 		std::uniform_real_distribution<float> height(config::SCANT_HEIGHT, config::WORLD_HEIGHT - config::SCANT_HEIGHT);
 
-		prefabs::createFormation(coordinator, EnemyKind::Scant, height(_rng), 1);
+		prefabs::createFormation(coordinator, network::EnemyKind::Scant, height(_rng), 1);
 		return;
 	}
 	if (std::bernoulli_distribution(config::BINK_WAVE_CHANCE)(_rng)) {
-		prefabs::createFormation(coordinator, EnemyKind::Bink, config::GROUND_Y, 1);
+		prefabs::createFormation(coordinator, network::EnemyKind::Bink, config::GROUND_Y, 1);
 		return;
 	}
 	if (std::bernoulli_distribution(0.5)(_rng)) {
@@ -68,14 +68,14 @@ void EnemySpawnSystem::spawnWave(Coordinator& coordinator)
 		std::uniform_real_distribution<float> height(config::BUG_ARC_HEIGHT + config::BUG_HEIGHT,
 			config::WORLD_HEIGHT - std::max(descent, 0.0F) - config::BUG_HEIGHT);
 
-		prefabs::createFormation(coordinator, EnemyKind::Bug, height(_rng), size(_rng));
+		prefabs::createFormation(coordinator, network::EnemyKind::Bug, height(_rng), size(_rng));
 		return;
 	}
 	const float margin = config::PATAPATA_SPREAD + config::PATAPATA_AMPLITUDE + config::PATAPATA_HEIGHT / 2.0F;
 	std::uniform_int_distribution<int> size(config::PATAPATA_MIN_COUNT, config::PATAPATA_MAX_COUNT);
 	std::uniform_real_distribution<float> height(margin, config::WORLD_HEIGHT - margin);
 
-	prefabs::createFormation(coordinator, EnemyKind::Patapata, height(_rng), size(_rng));
+	prefabs::createFormation(coordinator, network::EnemyKind::Patapata, height(_rng), size(_rng));
 }
 
 }

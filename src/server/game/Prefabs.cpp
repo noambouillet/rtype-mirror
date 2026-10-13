@@ -95,7 +95,7 @@ ecs::Entity createScantBeam(ecs::Coordinator& coordinator, ecs::Position origin)
 	coordinator.addComponent(entity, ecs::DestroyOnHit{});
 	coordinator.addComponent(entity, ecs::Offscreen{ecs::OffscreenAction::Destroy});
 	coordinator.addComponent(entity, ecs::Replicated{network::EntityType::EnemyProjectile, network::NO_OWNER,
-										 static_cast<std::uint8_t>(ecs::ShotKind::Beam)});
+										 static_cast<std::uint8_t>(network::ShotKind::Beam)});
 	return entity;
 }
 
@@ -110,14 +110,14 @@ ecs::Entity createPatapata(ecs::Coordinator& coordinator, float baseY, float pha
 	coordinator.addComponent(entity, ecs::Position{config::WORLD_WIDTH + config::PATAPATA_WIDTH / 2.0F, startY});
 	coordinator.addComponent(entity, ecs::Velocity{});
 	coordinator.addComponent(entity, ecs::SineMotion{config::PATAPATA_SPEED, config::PATAPATA_AMPLITUDE, config::PATAPATA_FREQUENCY, phase, 0.0F});
-	coordinator.addComponent(entity, ecs::Weapon{config::PATAPATA_FIRE_COOLDOWN, firstShot, true, ecs::ShotKind::Aimed});
+	coordinator.addComponent(entity, ecs::Weapon{config::PATAPATA_FIRE_COOLDOWN, firstShot, true, network::ShotKind::Aimed});
 	coordinator.addComponent(entity, ecs::Health{config::PATAPATA_HEALTH, config::PATAPATA_HEALTH});
 	coordinator.addComponent(entity, ecs::Damage{config::ENEMY_CONTACT_DAMAGE});
 	coordinator.addComponent(entity, centredCollider(config::PATAPATA_WIDTH, config::PATAPATA_HEIGHT,
 										 ecs::layer::ENEMY, ecs::layer::PLAYER | ecs::layer::PLAYER_PROJECTILE));
 	coordinator.addComponent(entity, ecs::Offscreen{ecs::OffscreenAction::Destroy});
 	coordinator.addComponent(entity, ecs::Replicated{network::EntityType::Enemy, network::NO_OWNER,
-										 static_cast<std::uint8_t>(ecs::EnemyKind::Patapata)});
+										 static_cast<std::uint8_t>(network::EnemyKind::Patapata)});
 	return entity;
 }
 
@@ -130,14 +130,14 @@ ecs::Entity createBug(ecs::Coordinator& coordinator, float y, float firstShot)
 	coordinator.addComponent(entity, ecs::Position{config::WORLD_WIDTH + config::BUG_WIDTH / 2.0F, y});
 	coordinator.addComponent(entity, ecs::Velocity{});
 	coordinator.addComponent(entity, ecs::SineMotion{config::BUG_SPEED, -config::BUG_ARC_HEIGHT, config::BUG_FREQUENCY, 0.0F, 0.0F});
-	coordinator.addComponent(entity, ecs::Weapon{config::BUG_FIRE_COOLDOWN, firstShot, true, ecs::ShotKind::Aimed});
+	coordinator.addComponent(entity, ecs::Weapon{config::BUG_FIRE_COOLDOWN, firstShot, true, network::ShotKind::Aimed});
 	coordinator.addComponent(entity, ecs::Health{config::BUG_HEALTH, config::BUG_HEALTH});
 	coordinator.addComponent(entity, ecs::Damage{config::ENEMY_CONTACT_DAMAGE});
 	coordinator.addComponent(entity, centredCollider(config::BUG_WIDTH, config::BUG_HEIGHT,
 										 ecs::layer::ENEMY, ecs::layer::PLAYER | ecs::layer::PLAYER_PROJECTILE));
 	coordinator.addComponent(entity, ecs::Offscreen{ecs::OffscreenAction::Destroy});
 	coordinator.addComponent(entity, ecs::Replicated{network::EntityType::Enemy, network::NO_OWNER,
-										 static_cast<std::uint8_t>(ecs::EnemyKind::Bug)});
+										 static_cast<std::uint8_t>(network::EnemyKind::Bug)});
 	return entity;
 }
 
@@ -148,14 +148,14 @@ ecs::Entity createBink(ecs::Coordinator& coordinator, float firstShot)
 	coordinator.addComponent(entity, ecs::Position{config::WORLD_WIDTH + config::BINK_WIDTH / 2.0F,
 										 config::GROUND_Y - config::BINK_HEIGHT / 2.0F});
 	coordinator.addComponent(entity, ecs::Velocity{-config::BINK_SPEED, 0.0F});
-	coordinator.addComponent(entity, ecs::Weapon{config::BINK_FIRE_COOLDOWN, firstShot, true, ecs::ShotKind::Aimed});
+	coordinator.addComponent(entity, ecs::Weapon{config::BINK_FIRE_COOLDOWN, firstShot, true, network::ShotKind::Aimed});
 	coordinator.addComponent(entity, ecs::Health{config::BINK_HEALTH, config::BINK_HEALTH});
 	coordinator.addComponent(entity, ecs::Damage{config::ENEMY_CONTACT_DAMAGE});
 	coordinator.addComponent(entity, centredCollider(config::BINK_WIDTH, config::BINK_HEIGHT,
 										 ecs::layer::ENEMY, ecs::layer::PLAYER | ecs::layer::PLAYER_PROJECTILE));
 	coordinator.addComponent(entity, ecs::Offscreen{ecs::OffscreenAction::Destroy});
 	coordinator.addComponent(entity, ecs::Replicated{network::EntityType::Enemy, network::NO_OWNER,
-										 static_cast<std::uint8_t>(ecs::EnemyKind::Bink)});
+										 static_cast<std::uint8_t>(network::EnemyKind::Bink)});
 	return entity;
 }
 
@@ -169,25 +169,25 @@ ecs::Entity createScant(ecs::Coordinator& coordinator, float y, float firstShot)
 	coordinator.addComponent(entity, ecs::Velocity{});
 	coordinator.addComponent(entity, ecs::HoverMotion{config::SCANT_SPEED, config::SCANT_HOLD_X, config::SCANT_TRACK_SPEED,
 										 config::SCANT_STAY_TIME, config::SCANT_CHARGE_TIME, 0.0F});
-	coordinator.addComponent(entity, ecs::Weapon{config::SCANT_FIRE_COOLDOWN, firstShot, true, ecs::ShotKind::Beam});
+	coordinator.addComponent(entity, ecs::Weapon{config::SCANT_FIRE_COOLDOWN, firstShot, true, network::ShotKind::Beam});
 	coordinator.addComponent(entity, ecs::Health{config::SCANT_HEALTH, config::SCANT_HEALTH});
 	coordinator.addComponent(entity, ecs::Damage{config::ENEMY_CONTACT_DAMAGE});
 	coordinator.addComponent(entity, centredCollider(config::SCANT_WIDTH, config::SCANT_HEIGHT,
 										 ecs::layer::ENEMY, ecs::layer::PLAYER | ecs::layer::PLAYER_PROJECTILE));
 	coordinator.addComponent(entity, ecs::Offscreen{ecs::OffscreenAction::Destroy});
 	coordinator.addComponent(entity, ecs::Replicated{network::EntityType::Enemy, network::NO_OWNER,
-										 static_cast<std::uint8_t>(ecs::EnemyKind::Scant)});
+										 static_cast<std::uint8_t>(network::EnemyKind::Scant)});
 	return entity;
 }
 
 /// Creates an invisible (not replicated) entity that sends `count` enemies of `kind` around height `y`, the first one
 /// next tick: Bugs all start at `y` so they trace one shared path, Patapata are scattered so each weaves on its own.
 /// Binks ignore `y`: they always walk on the ground.
-ecs::Entity createFormation(ecs::Coordinator& coordinator, ecs::EnemyKind kind, float y, int count)
+ecs::Entity createFormation(ecs::Coordinator& coordinator, network::EnemyKind kind, float y, int count)
 {
 	const ecs::Entity entity = coordinator.createEntity();
-	const float delay = kind == ecs::EnemyKind::Bug ? config::BUG_DELAY : config::PATAPATA_DELAY;
-	const float spread = kind == ecs::EnemyKind::Patapata ? config::PATAPATA_SPREAD : 0.0F;
+	const float delay = kind == network::EnemyKind::Bug ? config::BUG_DELAY : config::PATAPATA_DELAY;
+	const float spread = kind == network::EnemyKind::Patapata ? config::PATAPATA_SPREAD : 0.0F;
 
 	coordinator.addComponent(entity, ecs::FormationSpawner{kind, count, delay, 0.0F, y, spread});
 	return entity;

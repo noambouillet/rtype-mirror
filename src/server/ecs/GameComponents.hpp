@@ -32,16 +32,11 @@ struct PlayerControl {
 	float speed = 0.0F;
 };
 
-enum class ShotKind : std::uint8_t {
-	Aimed,
-	Beam,
-};
-
 struct Weapon {
 	float cooldown = 0.0F;
 	float remaining = 0.0F;
 	bool firing = false;
-	ShotKind shot = ShotKind::Aimed;
+	network::ShotKind shot = network::ShotKind::Aimed;
 };
 
 struct WaveSpawner {
@@ -60,13 +55,6 @@ struct Offscreen {
 
 struct DestroyOnHit {};
 
-enum class EnemyKind : std::uint8_t {
-	Patapata = 0,
-	Bug = 1,
-	Scant = 2,
-	Bink = 3,
-};
-
 struct SineMotion {
 	float speed = 0.0F;
 	float amplitude = 0.0F;
@@ -76,7 +64,7 @@ struct SineMotion {
 };
 
 struct FormationSpawner {
-	EnemyKind kind = EnemyKind::Patapata;
+	network::EnemyKind kind = network::EnemyKind::Patapata;
 	int remaining = 0;
 	float delay = 0.0F;
 	float timer = 0.0F;
