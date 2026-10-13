@@ -31,7 +31,7 @@ Signature WeaponSystem::signature(Coordinator& coordinator)
 
 /// Ticks each cooldown and fires for the weapons that are requested to and ready.
 /// A weapon that holds its fire stays ready, so it shoots as soon as it gets a target.
-void WeaponSystem::update(Coordinator& coordinator, float elapsedTime)
+std::vector<Entity> WeaponSystem::update(Coordinator& coordinator, float elapsedTime)
 {
 	std::vector<Entity> spawned;
 	for (const Entity& e : entities) {

@@ -7,6 +7,8 @@
 
 #pragma once
 
+#include <vector>
+
 #include "Components.hpp"
 #include "Coordinator.hpp"
 #include "System.hpp"
@@ -16,7 +18,7 @@ namespace rtype::ecs {
 class WeaponSystem : public System {
 public:
 	Signature signature(Coordinator& coordinator);
-	void update(Coordinator& coordinator, float elapsedTime);
+	std::vector<Entity> update(Coordinator& coordinator, float elapsedTime);
 
 private:
 	bool fire(Coordinator& coordinator, Entity shooter);
