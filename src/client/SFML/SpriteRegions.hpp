@@ -22,7 +22,10 @@ static constexpr std::array<sf::IntRect, 4> PLAYER_SHIPS = {
 };
 
 static constexpr std::string_view ENEMY_SHEET = "r-typesheet5.gif";
-static constexpr sf::IntRect ENEMY_BYDO = {{0, 0}, {33, 36}};
+static constexpr sf::IntRect ENEMY_PATAPATA = {{0, 0}, {33, 36}};
+
+static constexpr std::string_view BUG_SHEET = "r-typesheet8.gif";
+static constexpr sf::IntRect ENEMY_BUG = {{0, 0}, {33, 34}};
 
 static constexpr std::string_view SHOT_SHEET = "r-typesheet1.gif";
 static constexpr std::array<sf::IntRect, 4> PLAYER_SHOT_FRAMES = {
@@ -69,5 +72,15 @@ static constexpr std::array<sf::IntRect, 10> PLAYER_EXPLOSION_FRAMES = [] {
 	}
 	return frames;
 }();
+
+static constexpr std::string_view ENEMY_SHOT_SHEET = "r-typesheet43.gif";
+static constexpr sf::IntRect ENEMY_SHOT = {{136, 6}, {7, 6}};
+
+static constexpr std::string_view SCANT_SHEET = "r-typesheet9.gif";
+static constexpr sf::IntRect ENEMY_SCANT = {{52, 3}, {56, 54}};
+static constexpr sf::IntRect SCANT_BEAM = {{36, 59}, {54, 16}};
+
+static constexpr std::string_view BINK_SHEET = "r-typesheet7.gif";
+static constexpr sf::IntRect ENEMY_BINK = {{1, 4}, {32, 29}};
 
 }

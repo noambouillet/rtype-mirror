@@ -61,12 +61,12 @@ static std::uint32_t randomSessionId()
 
 #endif
 
-/// Encodes a world coordinate as a signed 1/16-pixel value in network byte order. (So need to divide by 16.0f on the client side to get the original float value)
+/// Encodes a world coordinate as a signed 1/16-pixel value in network byte order. (So need to divide by 16.0F on the client side to get the original float value)
 static std::uint32_t encodePosition(float position)
 {
-	const double scaled = static_cast<double>(position) * 16.0;
-	const auto minimum = static_cast<double>(std::numeric_limits<std::int32_t>::min());
-	const auto maximum = static_cast<double>(std::numeric_limits<std::int32_t>::max());
+	const double scaled = static_cast<double>(position) * 16.0F;
+	const double minimum = static_cast<double>(std::numeric_limits<std::int32_t>::min());
+	const double maximum = static_cast<double>(std::numeric_limits<std::int32_t>::max());
 	const auto fixed = static_cast<std::int32_t>(std::lround(std::clamp(scaled, minimum, maximum)));
 	return static_cast<std::uint32_t>(fixed);
 }

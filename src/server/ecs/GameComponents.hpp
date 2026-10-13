@@ -29,24 +29,56 @@ struct Replicated {
 
 struct PlayerControl {
 	std::uint8_t playerId = 0;
-	float speed = 0.0f;
+	float speed = 0.0F;
 };
 
 struct Weapon {
-	float cooldown = 0.0f;
-	float remaining = 0.0f;
+	float cooldown = 0.0F;
+	float remaining = 0.0F;
 	bool firing = false;
+	network::ShotKind shot = network::ShotKind::Aimed;
 };
 
 struct WaveSpawner {
-	float interval = 0.0f;
-	float timer = 0.0f;
-	int minSize = 0;
-	int maxSize = 0;
+	float interval = 0.0F;
+	float timer = 0.0F;
 };
 
-struct DestroyOffscreen {};
+enum class OffscreenAction : std::uint8_t {
+	Destroy,
+	Block,
+};
+
+struct Offscreen {
+	OffscreenAction action = OffscreenAction::Destroy;
+};
 
 struct DestroyOnHit {};
+
+struct SineMotion {
+	float speed = 0.0F;
+	float amplitude = 0.0F;
+	float frequency = 0.0F;
+	float phase = 0.0F;
+	float elapsed = 0.0F;
+};
+
+struct FormationSpawner {
+	network::EnemyKind kind = network::EnemyKind::Patapata;
+	int remaining = 0;
+	float delay = 0.0F;
+	float timer = 0.0F;
+	float y = 0.0F;
+	float spread = 0.0F;
+};
+
+struct HoverMotion {
+	float speed = 0.0F;
+	float holdX = 0.0F;
+	float trackSpeed = 0.0F;
+	float stayTime = 0.0F;
+	float chargeTime = 0.0F;
+	float elapsed = 0.0F;
+};
 
 }

@@ -26,6 +26,12 @@ struct WorldSnapshot;
 class Sfml {
 private:
 	static constexpr float JOYSTICK_THRESHOLD = 50.0F;
+	static constexpr float PLAYER_SPEED = 250;
+	static constexpr float MAX_FRAME_SECONDS = 0.1;
+	static constexpr std::uint32_t WINDOW_WIDTH = 1280;
+	static constexpr std::uint32_t WINDOW_HEIGHT = 720;
+	static constexpr float SHIP_SCALE = 3.0F;  // player ships and enemies; the server colliders match this scale
+	static constexpr float SHOT_SCALE = 2.0F;
 	static constexpr auto SHOT_FRAME_TIME = std::chrono::milliseconds(80);
 
 	std::uint8_t keyboardButtons() const;
@@ -33,6 +39,7 @@ private:
 	void drawPlayer(const network::WorldEntity& entity);
 	void drawPlayerShot(const network::WorldEntity& entity);
 	void drawEnemy(const network::WorldEntity& entity);
+	void drawEnemyShot(const network::WorldEntity& entity);
 
 	sf::RenderWindow _window;
 	AssetManager& _assets;

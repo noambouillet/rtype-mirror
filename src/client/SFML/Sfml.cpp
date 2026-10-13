@@ -117,7 +117,7 @@ void Sfml::drawPlayer(const network::WorldEntity& entity)
 	}
 	sf::Sprite sprite = _assets.sprite(sprites::PLAYER_SHEET, sprites::PLAYER_SHIPS[safeSpriteId]);
 	sprite.setOrigin({16.0F, 8.0F});
-	sprite.setScale({2.0F, 2.0F});
+	sprite.setScale({SHIP_SCALE, SHIP_SCALE});
 	sprite.setPosition({entity.x, entity.y});
 	_window.draw(sprite);
 }
@@ -129,17 +129,47 @@ void Sfml::drawPlayerShot(const network::WorldEntity& entity)
 	const std::size_t frameIndex = static_cast<std::size_t>(age.count() / SHOT_FRAME_TIME.count()) % sprites::PLAYER_SHOT_FRAMES.size();
 	sf::Sprite sprite = _assets.sprite(sprites::SHOT_SHEET, sprites::PLAYER_SHOT_FRAMES[frameIndex]);
 	sprite.setOrigin({8.0F, 6.0F});
-	sprite.setScale({2.0F, 2.0F});
+	sprite.setScale({SHOT_SCALE, SHOT_SCALE});
 	sprite.setPosition({entity.x, entity.y});
 	_window.draw(sprite);
 }
 
-/// Draws a Bydo enemy.
+/// Draws a projectile fired by an enemy: a Scant beam or, by default, an aimed orb.
+void Sfml::drawEnemyShot(const network::WorldEntity& entity)
+{
+	const bool beam = static_cast<network::ShotKind>(entity.spriteId) == network::ShotKind::Beam;
+	sf::Sprite sprite = beam ? _assets.sprite(sprites::SCANT_SHEET, sprites::SCANT_BEAM)
+							 : _assets.sprite(sprites::ENEMY_SHOT_SHEET, sprites::ENEMY_SHOT);
+	sprite.setOrigin(beam ? sf::Vector2f{27.0F, 8.0F} : sf::Vector2f{3.5F, 3.0F});
+	sprite.setScale({SHOT_SCALE, SHOT_SCALE});
+	sprite.setPosition({entity.x, entity.y});
+	_window.draw(sprite);
+}
+
+/// Draws an enemy: a Bug, a Scant, a Bink or, by default, a Patapata.
 void Sfml::drawEnemy(const network::WorldEntity& entity)
 {
-	sf::Sprite sprite = _assets.sprite(sprites::ENEMY_SHEET, sprites::ENEMY_BYDO);
-	sprite.setOrigin({16.5F, 18.0F});
-	sprite.setScale({2.0F, 2.0F});
+	sf::Sprite sprite = _assets.sprite(sprites::ENEMY_SHEET, sprites::ENEMY_PATAPATA);
+	sf::Vector2f origin{16.5F, 18.0F};
+
+	switch (static_cast<network::EnemyKind>(entity.spriteId)) {
+		case network::EnemyKind::Bug:
+			sprite = _assets.sprite(sprites::BUG_SHEET, sprites::ENEMY_BUG);
+			origin = {16.5F, 17.0F};
+			break;
+		case network::EnemyKind::Scant:
+			sprite = _assets.sprite(sprites::SCANT_SHEET, sprites::ENEMY_SCANT);
+			origin = {28.0F, 27.0F};
+			break;
+		case network::EnemyKind::Bink:
+			sprite = _assets.sprite(sprites::BINK_SHEET, sprites::ENEMY_BINK);
+			origin = {16.0F, 14.5F};
+			break;
+		default:
+			break;
+	}
+	sprite.setOrigin(origin);
+	sprite.setScale({SHIP_SCALE, SHIP_SCALE});
 	sprite.setPosition({entity.x, entity.y});
 	_window.draw(sprite);
 }
@@ -159,6 +189,9 @@ void Sfml::displayWindow(const std::optional<network::WorldSnapshot>& snapshot, 
 					break;
 				case network::EntityType::Enemy:
 					drawEnemy(entity);
+					break;
+				case network::EntityType::EnemyProjectile:
+					drawEnemyShot(entity);
 					break;
 				default:
 					break;

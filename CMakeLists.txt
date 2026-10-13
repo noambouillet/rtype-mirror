@@ -49,10 +49,13 @@ set(RTYPE_GAME_SOURCES
     src/server/game/WorldEventCollector.cpp
     src/server/game/Prefabs.cpp
     src/server/ecs/Systems/EnemySpawnSystem.cpp
+    src/server/ecs/Systems/FormationSystem.cpp
     src/server/ecs/Systems/HitSystem.cpp
+    src/server/ecs/Systems/HoverMotionSystem.cpp
     src/server/ecs/Systems/OffscreenSystem.cpp
     src/server/ecs/Systems/PlayerControlSystem.cpp
     src/server/ecs/Systems/ReplicationSystem.cpp
+    src/server/ecs/Systems/SineMotionSystem.cpp
     src/server/ecs/Systems/WeaponSystem.cpp
 )
 

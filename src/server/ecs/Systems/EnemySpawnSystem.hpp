@@ -19,10 +19,10 @@ class EnemySpawnSystem : public System {
 public:
 	EnemySpawnSystem();
 	Signature signature(Coordinator& coordinator);
-	std::vector<Entity> update(Coordinator& coordinator, float dt, bool active);
+	void update(Coordinator& coordinator, float elapsedTime, bool active);
 
 private:
-	std::vector<Entity> spawnWave(Coordinator& coordinator, int minSize, int maxSize);
+	void spawnWave(Coordinator& coordinator);
 
 	std::mt19937 _rng;
 };

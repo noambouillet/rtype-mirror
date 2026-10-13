@@ -14,9 +14,12 @@
 #include "MovementSystem.hpp"
 #include "server/ecs/GameComponents.hpp"
 #include "server/ecs/Systems/EnemySpawnSystem.hpp"
+#include "server/ecs/Systems/FormationSystem.hpp"
 #include "server/ecs/Systems/HitSystem.hpp"
 #include "server/ecs/Systems/OffscreenSystem.hpp"
+#include "server/ecs/Systems/HoverMotionSystem.hpp"
 #include "server/ecs/Systems/PlayerControlSystem.hpp"
+#include "server/ecs/Systems/SineMotionSystem.hpp"
 #include "server/ecs/Systems/WeaponSystem.hpp"
 #include "server/game/Prefabs.hpp"
 
@@ -52,8 +55,11 @@ void GameWorld::registerComponents()
 	_coordinator.registerComponent<ecs::PlayerControl>();
 	_coordinator.registerComponent<ecs::Weapon>();
 	_coordinator.registerComponent<ecs::WaveSpawner>();
-	_coordinator.registerComponent<ecs::DestroyOffscreen>();
+	_coordinator.registerComponent<ecs::Offscreen>();
 	_coordinator.registerComponent<ecs::DestroyOnHit>();
+	_coordinator.registerComponent<ecs::SineMotion>();
+	_coordinator.registerComponent<ecs::FormationSpawner>();
+	_coordinator.registerComponent<ecs::HoverMotion>();
 }
 
 /// Registers every system; it must happen before any entity exists so each system sees them all.
@@ -62,6 +68,9 @@ void GameWorld::registerSystems()
 	registerSystem<ecs::PlayerControlSystem>(_coordinator);
 	registerSystem<ecs::WeaponSystem>(_coordinator);
 	registerSystem<ecs::EnemySpawnSystem>(_coordinator);
+	registerSystem<ecs::FormationSystem>(_coordinator);
+	registerSystem<ecs::SineMotionSystem>(_coordinator);
+	registerSystem<ecs::HoverMotionSystem>(_coordinator);
 	registerSystem<ecs::MovementSystem>(_coordinator);
 	registerSystem<ecs::CollisionSystem>(_coordinator);
 	registerSystem<ecs::DamageSystem>(_coordinator);
@@ -92,6 +101,9 @@ void GameWorld::runSystems(const Input& input, float deltaTime, WorldEventCollec
 	for (const ecs::Entity& enemy : enemies) {
 		events.recordSpawn(_coordinator, enemy);
 	}
+  _coordinator.getSystem<ecs::FormationSystem>().update(_coordinator, deltaTime);
+	_coordinator.getSystem<ecs::SineMotionSystem>().update(_coordinator, deltaTime);
+	_coordinator.getSystem<ecs::HoverMotionSystem>().update(_coordinator, deltaTime);
 	_coordinator.getSystem<ecs::MovementSystem>().update(_coordinator, deltaTime);
 	_coordinator.getSystem<ecs::CollisionSystem>().update(_coordinator);
 	const std::vector<ecs::CollisionPair>& collisions = _coordinator.getSystem<ecs::CollisionSystem>().collisions();

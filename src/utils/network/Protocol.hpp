@@ -61,6 +61,20 @@ enum class EntityType : std::uint8_t {
 	EnemyProjectile = 4,
 };
 
+/// Enemy kinds, carried as the variant of an Enemy record.
+enum class EnemyKind : std::uint8_t {
+	Patapata = 0,
+	Bug = 1,
+	Scant = 2,
+	Bink = 3,
+};
+
+/// Enemy shot kinds, carried as the variant of an EnemyProjectile record.
+enum class ShotKind : std::uint8_t {
+	Aimed = 0,
+	Beam = 1,
+};
+
 struct Header {
 	PacketType type;
 	std::uint16_t payloadSize;
