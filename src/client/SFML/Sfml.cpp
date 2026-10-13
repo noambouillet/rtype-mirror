@@ -19,6 +19,8 @@ Sfml::Sfml(AssetManager& assets)
 	  _assets(assets),
 	  _visualEffects(assets),
 	  _joystickId(0),
+	  _lastFrame(std::chrono::steady_clock::now()),
+	  _background(assets, _window)
 	  _animationStart(std::chrono::steady_clock::now())
 {
 	_window.setFramerateLimit(60);
@@ -48,6 +50,15 @@ void Sfml::handleEvent()
 std::uint8_t Sfml::buttons() const
 {
 	return keyboardButtons() | joystickButtons();
+}
+
+/// Updates the scrolling background based on the elapsed time since the last frame.
+void Sfml::updateBackground()
+{
+	const auto now = std::chrono::steady_clock::now();
+	const float elapsedTime = std::chrono::duration<float>(now - _lastFrame).count();
+	_background.update(elapsedTime);
+	_lastFrame = now;
 }
 
 /// Plays the local weapon effect before waiting for the server's projectile spawn.
@@ -178,6 +189,7 @@ void Sfml::drawEnemy(const network::WorldEntity& entity)
 void Sfml::displayWindow(const std::optional<network::WorldSnapshot>& snapshot, const std::vector<network::WorldEventNotice>& events)
 {
 	_window.clear(sf::Color::Black);
+	_background.draw(_window);
 	if (snapshot) {
 		for (const auto& entity : snapshot->entities) {
 			switch (entity.entityType) {

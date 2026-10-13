@@ -34,8 +34,16 @@ void AssetManager::preload(std::string_view name)
 	_missing.erase(key);
 }
 
+/// Sets whether a required texture repeats outside its image bounds.
+void AssetManager::setRepeated(std::string_view name, bool repeated)
+{
+	const std::filesystem::path key = std::filesystem::path(name).lexically_normal();
+	loadTexture(key).setRepeated(repeated);
+	_missing.erase(key);
+}
+
 /// Loads "name" into the map or throws if the file cannot be read.
-const sf::Texture& AssetManager::loadTexture(const std::filesystem::path& name)
+sf::Texture& AssetManager::loadTexture(const std::filesystem::path& name)
 {
 	const std::filesystem::path key = name.lexically_normal();
 	const std::filesystem::path assetPath = _root / key;

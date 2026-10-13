@@ -14,6 +14,7 @@
 #include <vector>
 
 #include "AssetManager.hpp"
+#include "ScrollingBackground.hpp"
 #include "VisualEffects.hpp"
 
 namespace rtype {
@@ -45,6 +46,8 @@ private:
 	AssetManager& _assets;
 	VisualEffects _visualEffects;
 	unsigned int _joystickId;
+	std::chrono::steady_clock::time_point _lastFrame;
+	ScrollingBackground _background;
 	std::chrono::steady_clock::time_point _animationStart;
 
 public:
@@ -52,6 +55,7 @@ public:
 	bool isOpen() const;
 	void handleEvent();
 	std::uint8_t buttons() const;
+	void updateBackground();
 	void predictLocalFire(std::uint8_t buttons, std::optional<std::uint8_t> localPlayerId, const std::optional<network::WorldSnapshot>& snapshot);
 	void displayWindow(const std::optional<network::WorldSnapshot>& snapshot, const std::vector<network::WorldEventNotice>& events);
 };
