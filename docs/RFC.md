@@ -1,10 +1,10 @@
-# R-Type UDP protocol (session and input phase)
+# R-Type UDP protocol
 
-This version implements the network layer for one game with up to four player
-sessions. It handles joins, disconnects, errors, and input commands. The server
-runs fixed network ticks, but does not create entities, simulate gameplay, or
-send world snapshots. An ECS integration will consume the inputs and define the
-world messages later. This is a partial implementation of the Part 1 assignment.
+This protocol supports one game with up to four player
+sessions. The client sends joins, disconnects, and input commands and validates
+server replies. The server runs fixed ticks, simulates players, projectiles,
+enemies, collisions, and damage, and sends full world snapshots and gameplay
+events.
 
 ## Transport and encoding
 
@@ -23,7 +23,7 @@ world messages later. This is a partial implementation of the Part 1 assignment.
 | 5 | 1 | `u8` | `type` | One of the packet types below |
 | 6 | 2 | `u16` | `payload_size` | Bytes after the header |
 | 8 | 4 | `u32` | `sequence` | Sender's packet sequence number |
-| 12 | 4 | `u32` | `session_id` | Server-assigned session; `0` before joining |
+| 12 | 4 | `u32` | `session_id` | Nonzero in `JOIN_ACCEPTED`, `PLAYER_INPUT`, and `DISCONNECT`; `0` otherwise |
 
 The datagram length must equal `16 + payload_size`. Join messages and `ERROR`
 use sequence `0`. Session packets use nonzero sequence numbers, incremented by
@@ -42,9 +42,9 @@ the sender and skipping `0` on wraparound. Sequence `a` is newer than `b` when
 | `0x10` | `PLAYER_INPUT` | Client to server | 1 |
 | `0x20` | `WORLD_SNAPSHOT` | Server to client | `11 + 16 * entity_count` |
 | `0x21` | `ENTITY_SPAWN` | Server to clients | 24 |
-| `0x22` | `ENTITY_DESTROY` | Server to clients | 12 |
+| `0x22` | `ENTITY_DESTROY` | Server to clients | 21 |
 | `0x23` | `ENTITY_DAMAGE` | Server to clients | 13 |
-| `0x24` | `PLAYER_DEATH` | Server to clients | 13 |
+| `0x24` | `PLAYER_DEATH` | Server to clients | 21 |
 | `0x67` | `ERROR` | Server to client | 7 |
 
 The header's `type` identifies the message; payloads have no command code.
@@ -62,15 +62,17 @@ sequenceDiagram
     alt Slot available
         S-->>C: JOIN_ACCEPTED (same nonce, player ID, session ID)
         C->>S: PLAYER_INPUT (session ID)
-        S-->>C: WORLD_SNAPSHOT (next tick, then every 50 ms)
+        S-->>C: WORLD_SNAPSHOT (session ID 0; next tick, then every 50 ms)
     else Four players connected
         S-->>C: JOIN_REJECTED (same nonce, SERVER_FULL)
     end
 ```
 
 The client picks a fresh random `u64 client_nonce`. The server assigns an
-unused player ID (`0`-`3`) and a nonzero `u32 session_id` that it never reuses
-during that run.
+unused player ID (`0`-`3`) and a nonzero `u32 session_id` drawn from the
+operating system's cryptographic random source. It checks each candidate
+against all IDs assigned during that server run and never reuses one. If it
+cannot obtain an unused ID after 32 attempts, it rejects the join.
 
 | Packet | Payload fields in wire order |
 | --- | --- |
@@ -79,16 +81,23 @@ during that run.
 | `JOIN_REJECTED` | `client_nonce: u64`, `reason: u8` |
 
 A join request uses sequence `0` and session ID `0`. Join responses use
-sequence `0` and echo the nonce. A rejection has session ID `0`; reason `1`
-means `SERVER_FULL`. The server also rejects new sessions after exhausting its
-nonzero session IDs.
+sequence `0` and echo the nonce. `JOIN_ACCEPTED` carries the new session ID
+in its header; subsequent server packets use session ID `0`. A rejection also
+has session ID `0`; reason `1` means `SERVER_FULL`. The server also rejects new
+sessions after exhausting its nonzero session IDs.
 
-The client may retry the same request and nonce every 500 ms, up to 10
-attempts. While the session is active, the server repeats its acceptance for
+The current client retries the same request and nonce every 500 ms, up to 10
+attempts, then reports a timeout. It ignores acceptance and rejection packets
+with a different nonce, malformed server packets, and replies from other
+addresses. It reports validated `PLAYER_LEFT` and `ERROR` notices in the log.
+An `INVALID_SESSION` error closes the local session. While the session is
+active, the server repeats its acceptance for
 that nonce without creating another player. Reconnecting after leaving
 requires a new nonce. The session ID alone selects a session; it has no login
-or identity. A repeated join or valid in-session packet updates the session's
-return address and port.
+or identity. Its 32-bit size limits resistance to online guessing, and UDP
+does not protect it from a network observer: client inputs carry the ID in
+every packet. It must not be treated as a secret authenticator. A repeated
+join or valid in-session packet updates the session's return address and port.
 
 `DISCONNECT` has no payload and requires a nonzero sequence and a valid
 session ID. On disconnect, or after 5 seconds without a valid client packet,
@@ -105,8 +114,8 @@ heartbeat.
 
 ## Input commands and timing
 
-The server processes queued datagrams at 60 fixed ticks per second. Clients
-send their full button state on each change and every 50 ms, including when
+The server processes queued datagrams at 60 fixed ticks per second. The current
+client sends its full button state on each change and every 50 ms, including when
 idle. Periodic input refreshes the session and replaces lost commands; it does
 not request a reply. After 250 ms without a newer input, the server exposes
 all buttons as released for that tick. The session itself expires after 5
@@ -126,13 +135,15 @@ seconds without a valid client packet.
 Up + Right + Fire is `00011001` (`0x19`). The server retains the latest valid
 input sequence and button state for each session. It discards duplicate or
 older input sequences. Any valid in-session packet updates the session's
-last-heard time, even if its input sequence is old. No movement, shooting, or
-other gameplay action is performed in this phase.
+last-heard time, even if its input sequence is old. The server applies movement
+and firing from the current input; a held Fire button shoots at most once
+every 0.25 seconds.
 
 `GameServer::tick()` returns `TickInput` with a four-entry `buttons` array and
-a `connectedMask`. A future ECS system can consume that value on each game
-tick. `GameServer::run()` currently schedules these ticks and discards the
-returned value. No separate input queue or command broadcast is implemented.
+a `connectedMask`. `GameServer::run()` passes those inputs to `GameWorld`, which
+owns the ECS and the gameplay rules, and broadcasts world snapshots built from
+its replicated entities. No separate input queue or command
+broadcast is implemented.
 
 ## Packet validation and errors
 
@@ -172,7 +183,7 @@ The locally rendered starfield does not count.
 | Enemy projectile | `4` | `255` |
 
 For player ships, `variant` equals the player ID. Render IDs `0`-`3` in blue,
-red, green, and yellow respectively. Other kinds use variant `0` as their base
+red, green, and magenta respectively. Other kinds use variant `0` as their base
 appearance; clients may show that base for unknown non-player variants.
 
 ### Full snapshot
@@ -206,21 +217,32 @@ applied tick.
 
 ### Events
 
-Events provide prompt effects between snapshots. Each is sent once and starts
-with `server_tick: u64`, followed by:
+`GameWorld` returns a tick-local list of spawn, surviving damage, destruction,
+and player death events. `ServerNetworkService` sends one packet per event, before that
+tick's snapshot. The client validates and queues events for presentation; they
+do not replace its authoritative snapshot. Disconnecting a player removes the
+ship and uses the separate `PLAYER_LEFT` notice; it does not count as a death.
+
+Each event is sent once and starts with `server_tick: u64`, followed by:
 
 | Type | Remaining payload fields in wire order |
 | --- | --- |
 | `ENTITY_SPAWN` | One complete 16-byte entity record |
-| `ENTITY_DESTROY` | `entity_id: u32` |
+| `ENTITY_DESTROY` | `entity_id: u32`, `kind: u8`, `x: i32`, `y: i32` |
 | `ENTITY_DAMAGE` | `entity_id: u32`, `remaining_health: u8` |
-| `PLAYER_DEATH` | `player_id: u8`, `entity_id: u32` |
+| `PLAYER_DEATH` | `player_id: u8`, `entity_id: u32`, `x: i32`, `y: i32` |
 
 `PLAYER_DEATH` removes the ship and clears its alive bit, but can leave the
 session connected. `ENTITY_DESTROY` covers enemies and projectiles. Respawning
 a player uses `ENTITY_SPAWN` with a new entity ID. Ignore events at or before
 the last applied snapshot tick. `ENTITY_DAMAGE` reports surviving health; at
-zero, the server sends `ENTITY_DESTROY` or `PLAYER_DEATH` instead.
+zero, the server sends `ENTITY_DESTROY` or `PLAYER_DEATH` instead. Repeated
+damage in one tick is coalesced to the final surviving health; a terminal event
+supersedes damage for the same entity. Destroy and death positions are the last
+authoritative positions in 1/16-pixel units. A destroy kind is enemy, player
+projectile, or enemy projectile. The client queues at most 256 unconsumed
+events and drops later ones until presentation drains the queue. UDP loss or
+reordering can omit an effect; snapshots repair world state.
 
 ## Packet handling and errors
 

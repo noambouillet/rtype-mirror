@@ -76,10 +76,15 @@ These rules are enforced by clang-tidy (see [Tooling](#tooling)).
   when ownership is truly shared.
 - Use `const` wherever possible. Mark overrides with `override`. Use `nullptr`,
   never `NULL` or `0`.
+- Add numeric literal suffixes only when they affect the intended type,
+  arithmetic, or overload selection, or prevent narrowing.
 - Prefer return values over output parameters. Pass large read-only inputs by
   `const&`.
 - Never trust network input: check sizes and ranges before reading or
   allocating. Malformed packets must never crash the client or server.
+- Throw project error classes for application failures instead of generic
+  standard or library exception types. Name errors by subsystem, as with
+  `EcsError`, `LoggerError`, `NetworkError`, and `GraphicsError`.
 - Keep functions short and focused. Prefer composition over inheritance.
 - Include what you use. Include order is handled by clang-format.
 
