@@ -8,28 +8,8 @@ env:
   MIRROR_URL: "git@github.com:EpitechPGE3-2026/G-ING-500-LIL-5-1-rtype-1.git"
 
 jobs:
-  check_repo:
-    runs-on: ubuntu-latest
-    outputs:
-      is_mirror: ${{ steps.detect.outputs.is_mirror }}
-    steps:
-      - name: Detect mirror repo or ignored branch
-        id: detect
-        run: |
-          repo_ssh_url="git@github.com:${{ github.repository }}.git"
-          is_mirror=false
-
-          if [ "$repo_ssh_url" = "${{ env.MIRROR_URL }}" ]; then
-            is_mirror=true
-          fi
-
-          branch_name="${GITHUB_REF#refs/heads/}"
-
-          echo "is_mirror=$is_mirror" >> "$GITHUB_OUTPUT"
-
   push_to_epitech:
-    needs: check_repo
-    if: needs.check_repo.outputs.is_mirror == 'false'
+    if: github.repository != 'EpitechPGE3-2026/G-ING-500-LIL-5-1-rtype-1'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
